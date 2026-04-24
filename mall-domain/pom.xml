@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.ddd</groupId>
+        <artifactId>ddd-mall-server</artifactId>
+        <version>1.0.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>mall-domain</artifactId>
+    <name>mall-domain</name>
+    <description>领域层 - 聚合根、实体、值对象、领域事件、仓储接口</description>
+
+    <!-- 领域层零框架依赖，纯 Java POJO -->
+</project>

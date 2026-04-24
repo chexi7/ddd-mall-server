@@ -1,0 +1,42 @@
+package com.ddd.mall.web.controller.admin;
+
+import com.ddd.mall.application.command.admin.AssignRolesCommand;
+import com.ddd.mall.application.command.admin.AssignRolesHandler;
+import com.ddd.mall.application.command.admin.CreateAdminCommand;
+import com.ddd.mall.application.command.admin.CreateAdminHandler;
+import com.ddd.mall.infrastructure.auth.RequireLogin;
+import com.ddd.mall.infrastructure.auth.RequirePermission;
+import com.ddd.mall.infrastructure.auth.UserType;
+import com.ddd.mall.web.request.admin.AssignRolesRequest;
+import com.ddd.mall.web.request.admin.CreateAdminRequest;
+import com.ddd.mall.web.response.ApiResponse;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.web.bind.annotation.*;
+
+@RestController
+@RequestMapping("/api/admin/admins")
+@RequiredArgsConstructor
+@RequireLogin(UserType.ADMIN)
+public class AdminController {
+
+    private final CreateAdminHandler createAdminHandler;
+    private final AssignRolesHandler assignRolesHandler;
+
+    @PostMapping
+    @RequirePermission("admin:create")
+    public ApiResponse<Long> createAdmin(@Valid @RequestBody CreateAdminRequest request) {
+        CreateAdminCommand command = new CreateAdminCommand(
+                request.getUsername(), request.getPassword(), request.getRealName(),
+                request.getPhone(), request.getEmail());
+        return ApiResponse.ok(createAdminHandler.handle(command));
+    }
+
+    @PutMapping("/{id}/roles")
+    @RequirePermission("admin:assign-role")
+    public ApiResponse<Void> assignRoles(@PathVariable Long id,
+                                          @Valid @RequestBody AssignRolesRequest request) {
+        assignRolesHandler.handle(new AssignRolesCommand(id, request.getRoleIds()));
+        return ApiResponse.ok();
+    }
+}
