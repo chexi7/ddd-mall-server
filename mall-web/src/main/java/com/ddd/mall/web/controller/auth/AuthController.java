@@ -13,6 +13,10 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+/**
+ * 认证接口
+ * 提供管理员和会员登录能力
+ */
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
@@ -22,7 +26,10 @@ public class AuthController {
     private final MemberLoginHandler memberLoginHandler;
 
     /**
-     * 后台管理员登录
+     * 管理员登录
+     *
+     * @param request 登录请求参数
+     * @return 管理员登录结果
      */
     @PostMapping("/admin/login")
     public ApiResponse<AdminLoginHandler.LoginResult> adminLogin(@Valid @RequestBody LoginRequest request) {
@@ -31,7 +38,10 @@ public class AuthController {
     }
 
     /**
-     * C端会员登录
+     * 会员登录
+     *
+     * @param request 登录请求参数
+     * @return 会员登录结果
      */
     @PostMapping("/member/login")
     public ApiResponse<MemberLoginHandler.MemberLoginResult> memberLogin(@Valid @RequestBody LoginRequest request) {

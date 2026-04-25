@@ -15,6 +15,10 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * 订单接口
+ * 提供订单创建 支付 取消 和详情查询能力
+ */
 @RestController
 @RequestMapping("/api/orders")
 @RequiredArgsConstructor
@@ -25,6 +29,12 @@ public class OrderController {
     private final CancelOrderHandler cancelOrderHandler;
     private final OrderDetailQueryHandler orderDetailQueryHandler;
 
+    /**
+     * 创建订单
+     *
+     * @param request 创建订单请求参数
+     * @return 订单号
+     */
     @PostMapping
     public ApiResponse<String> createOrder(@Valid @RequestBody CreateOrderRequest request) {
         List<CreateOrderCommand.OrderItemParam> items = request.getItems().stream()
@@ -42,18 +52,36 @@ public class OrderController {
                 new CreateOrderCommand(request.getMemberId(), items, shippingAddress)));
     }
 
+    /**
+     * 支付订单
+     *
+     * @param orderNo 订单号
+     * @return 空响应
+     */
     @PostMapping("/{orderNo}/pay")
     public ApiResponse<Void> payOrder(@PathVariable String orderNo) {
         payOrderHandler.handle(orderNo);
         return ApiResponse.ok();
     }
 
+    /**
+     * 取消订单
+     *
+     * @param orderNo 订单号
+     * @return 空响应
+     */
     @PostMapping("/{orderNo}/cancel")
     public ApiResponse<Void> cancelOrder(@PathVariable String orderNo) {
         cancelOrderHandler.handle(orderNo);
         return ApiResponse.ok();
     }
 
+    /**
+     * 查询订单详情
+     *
+     * @param orderNo 订单号
+     * @return 订单详情
+     */
     @GetMapping("/{orderNo}")
     public ApiResponse<OrderDetailDto> getOrder(@PathVariable String orderNo) {
         return ApiResponse.ok(orderDetailQueryHandler.handle(orderNo));

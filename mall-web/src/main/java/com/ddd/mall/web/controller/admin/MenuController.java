@@ -15,6 +15,10 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+/**
+ * 菜单接口
+ * 提供菜单创建和菜单树查询能力
+ */
 @RestController
 @RequestMapping("/api/admin/menus")
 @RequiredArgsConstructor
@@ -24,6 +28,12 @@ public class MenuController {
     private final CreateMenuHandler createMenuHandler;
     private final MenuTreeQueryHandler menuTreeQueryHandler;
 
+    /**
+     * 创建菜单
+     *
+     * @param request 创建菜单请求参数
+     * @return 创建的菜单ID
+     */
     @PostMapping
     @RequirePermission("menu:create")
     public ApiResponse<Long> createMenu(@Valid @RequestBody CreateMenuRequest request) {
@@ -35,6 +45,11 @@ public class MenuController {
         return ApiResponse.ok(createMenuHandler.handle(command));
     }
 
+    /**
+     * 查询菜单树
+     *
+     * @return 菜单树列表
+     */
     @GetMapping("/tree")
     public ApiResponse<List<MenuTreeDto>> getMenuTree() {
         return ApiResponse.ok(menuTreeQueryHandler.handle());

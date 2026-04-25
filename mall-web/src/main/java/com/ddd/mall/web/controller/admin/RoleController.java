@@ -14,6 +14,10 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
+/**
+ * 角色接口
+ * 提供角色创建和权限分配能力
+ */
 @RestController
 @RequestMapping("/api/admin/roles")
 @RequiredArgsConstructor
@@ -23,6 +27,12 @@ public class RoleController {
     private final CreateRoleHandler createRoleHandler;
     private final AssignPermissionsHandler assignPermissionsHandler;
 
+    /**
+     * 创建角色
+     *
+     * @param request 创建角色请求参数
+     * @return 创建的角色ID
+     */
     @PostMapping
     @RequirePermission("role:create")
     public ApiResponse<Long> createRole(@Valid @RequestBody CreateRoleRequest request) {
@@ -31,10 +41,17 @@ public class RoleController {
         return ApiResponse.ok(createRoleHandler.handle(command));
     }
 
+    /**
+     * 分配角色权限
+     *
+     * @param id 角色ID
+     * @param request 权限分配请求参数
+     * @return 空响应
+     */
     @PutMapping("/{id}/permissions")
     @RequirePermission("role:assign-permission")
     public ApiResponse<Void> assignPermissions(@PathVariable Long id,
-                                                @Valid @RequestBody AssignPermissionsRequest request) {
+                                               @Valid @RequestBody AssignPermissionsRequest request) {
         assignPermissionsHandler.handle(new AssignPermissionsCommand(id, request.getPermissionCodes()));
         return ApiResponse.ok();
     }
