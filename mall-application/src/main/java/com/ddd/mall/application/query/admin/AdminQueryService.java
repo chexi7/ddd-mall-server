@@ -16,17 +16,25 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
- * 管理员分页列表
+ * 管理员聚合查询服务。
  */
 @Service
 @RequiredArgsConstructor
-public class AdminListQueryHandler {
+public class AdminQueryService {
 
     private final AdminRepository adminRepository;
     private final RoleRepository roleRepository;
 
+    /**
+     * 管理员分页列表。
+     *
+     * @param page    页码
+     * @param size    每页条数
+     * @param keyword 搜索关键字
+     * @return 分页结果
+     */
     @Transactional(readOnly = true)
-    public PageResult<AdminListItemDto> handle(int page, int size, String keyword) {
+    public PageResult<AdminListItemDto> adminList(int page, int size, String keyword) {
         List<Admin> all = adminRepository.findAllAdmins();
         String kw = keyword == null ? "" : keyword.trim().toLowerCase();
         List<Admin> filtered = all.stream()

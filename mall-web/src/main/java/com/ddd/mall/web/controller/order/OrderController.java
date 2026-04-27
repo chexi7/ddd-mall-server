@@ -1,12 +1,10 @@
 package com.ddd.mall.web.controller.order;
 
-import com.ddd.mall.application.command.order.cmd.CancelOrderCommand;
-import com.ddd.mall.application.command.order.cmd.CreateOrderCommand;
-import com.ddd.mall.application.command.order.cmd.PayOrderCommand;
-import com.ddd.mall.application.command.order.handler.CancelOrderHandler;
-import com.ddd.mall.application.command.order.handler.CreateOrderHandler;
-import com.ddd.mall.application.command.order.handler.PayOrderHandler;
-import com.ddd.mall.application.query.order.OrderDetailQueryHandler;
+import com.ddd.mall.application.command.order.CancelOrderCommand;
+import com.ddd.mall.application.command.order.CreateOrderCommand;
+import com.ddd.mall.application.command.order.OrderApplicationService;
+import com.ddd.mall.application.command.order.PayOrderCommand;
+import com.ddd.mall.application.query.order.OrderQueryService;
 import com.ddd.mall.application.query.order.dto.OrderDetailDto;
 import com.ddd.mall.web.request.order.CreateOrderRequest;
 import com.ddd.mall.web.response.ApiResponse;
@@ -26,10 +24,8 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class OrderController {
 
-    private final CreateOrderHandler createOrderHandler;
-    private final PayOrderHandler payOrderHandler;
-    private final CancelOrderHandler cancelOrderHandler;
-    private final OrderDetailQueryHandler orderDetailQueryHandler;
+    private final OrderApplicationService orderApplicationService;
+    private final OrderQueryService orderQueryService;
 
     /**
      * 创建订单
@@ -50,7 +46,7 @@ public class OrderController {
                 addr.getReceiverName(), addr.getReceiverPhone(),
                 addr.getProvince(), addr.getCity(), addr.getDistrict(), addr.getDetail());
 
-        return ApiResponse.ok(createOrderHandler.handle(
+        return ApiResponse.ok(orderApplicationService.createOrder(
                 new CreateOrderCommand(request.getMemberId(), items, shippingAddress)));
     }
 
@@ -62,7 +58,7 @@ public class OrderController {
      */
     @PostMapping("/{orderNo}/pay")
     public ApiResponse<Void> payOrder(@PathVariable String orderNo) {
-        payOrderHandler.handle(new PayOrderCommand(orderNo));
+        orderApplicationService.payOrder(new PayOrderCommand(orderNo));
         return ApiResponse.ok();
     }
 
@@ -74,7 +70,7 @@ public class OrderController {
      */
     @PostMapping("/{orderNo}/cancel")
     public ApiResponse<Void> cancelOrder(@PathVariable String orderNo) {
-        cancelOrderHandler.handle(new CancelOrderCommand(orderNo));
+        orderApplicationService.cancelOrder(new CancelOrderCommand(orderNo));
         return ApiResponse.ok();
     }
 
@@ -86,6 +82,6 @@ public class OrderController {
      */
     @GetMapping("/{orderNo}")
     public ApiResponse<OrderDetailDto> getOrder(@PathVariable String orderNo) {
-        return ApiResponse.ok(orderDetailQueryHandler.handle(orderNo));
+        return ApiResponse.ok(orderQueryService.orderDetail(orderNo));
     }
 }

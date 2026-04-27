@@ -1,11 +1,9 @@
 package com.ddd.mall.web.controller.product;
 
-import com.ddd.mall.application.command.product.cmd.ChangePriceCommand;
-import com.ddd.mall.application.command.product.cmd.CreateProductCommand;
-import com.ddd.mall.application.command.product.cmd.PublishProductCommand;
-import com.ddd.mall.application.command.product.handler.ChangePriceHandler;
-import com.ddd.mall.application.command.product.handler.CreateProductHandler;
-import com.ddd.mall.application.command.product.handler.PublishProductHandler;
+import com.ddd.mall.application.command.product.ChangePriceCommand;
+import com.ddd.mall.application.command.product.CreateProductCommand;
+import com.ddd.mall.application.command.product.ProductApplicationService;
+import com.ddd.mall.application.command.product.PublishProductCommand;
 import com.ddd.mall.domain.product.ProductStatus;
 import com.ddd.mall.infrastructure.persistence.ProductJpaRepository;
 import com.ddd.mall.infrastructure.persistence.dataobject.ProductDO;
@@ -39,9 +37,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class ProductController {
 
-    private final CreateProductHandler createProductHandler;
-    private final PublishProductHandler publishProductHandler;
-    private final ChangePriceHandler changePriceHandler;
+    private final ProductApplicationService productApplicationService;
     private final ProductJpaRepository productJpaRepository;
 
     /**
@@ -102,7 +98,7 @@ public class ProductController {
         CreateProductCommand command = new CreateProductCommand(
                 request.getName(), request.getDescription(),
                 request.getPrice(), request.getCategory());
-        return ApiResponse.ok(createProductHandler.handle(command));
+        return ApiResponse.ok(productApplicationService.createProduct(command));
     }
 
     /**
@@ -113,7 +109,7 @@ public class ProductController {
      */
     @PostMapping("/{id}/publish")
     public ApiResponse<Void> publishProduct(@PathVariable Long id) {
-        publishProductHandler.handle(new PublishProductCommand(id));
+        productApplicationService.publishProduct(new PublishProductCommand(id));
         return ApiResponse.ok();
     }
 
@@ -127,7 +123,7 @@ public class ProductController {
     @PutMapping("/{id}/price")
     public ApiResponse<Void> changePrice(@PathVariable Long id,
                                          @Valid @RequestBody ChangePriceRequest request) {
-        changePriceHandler.handle(new ChangePriceCommand(id, request.getNewPrice()));
+        productApplicationService.changePrice(new ChangePriceCommand(id, request.getNewPrice()));
         return ApiResponse.ok();
     }
 

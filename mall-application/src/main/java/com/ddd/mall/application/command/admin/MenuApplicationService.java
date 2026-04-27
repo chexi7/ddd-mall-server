@@ -1,6 +1,5 @@
-package com.ddd.mall.application.command.admin.handler;
+package com.ddd.mall.application.command.admin;
 
-import com.ddd.mall.application.command.admin.cmd.CreateMenuCommand;
 import com.ddd.mall.domain.admin.Menu;
 import com.ddd.mall.domain.admin.MenuRepository;
 import com.ddd.mall.domain.admin.MenuType;
@@ -8,14 +7,23 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+/**
+ * 菜单聚合应用服务，承接菜单相关业务用例。
+ */
 @Service
 @RequiredArgsConstructor
-public class CreateMenuHandler {
+public class MenuApplicationService {
 
     private final MenuRepository menuRepository;
 
+    /**
+     * 创建菜单。
+     *
+     * @param command 创建菜单命令
+     * @return 新建菜单 ID
+     */
     @Transactional
-    public Long handle(CreateMenuCommand command) {
+    public Long createMenu(CreateMenuCommand command) {
         Menu menu = new Menu(
                 command.getName(), command.getParentId(),
                 command.getPath(), command.getComponent(),

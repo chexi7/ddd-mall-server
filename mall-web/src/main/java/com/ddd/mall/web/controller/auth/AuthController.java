@@ -1,9 +1,10 @@
 package com.ddd.mall.web.controller.auth;
 
-import com.ddd.mall.application.command.auth.cmd.AdminLoginCommand;
-import com.ddd.mall.application.command.auth.cmd.MemberLoginCommand;
-import com.ddd.mall.application.command.auth.handler.AdminLoginHandler;
-import com.ddd.mall.application.command.auth.handler.MemberLoginHandler;
+import com.ddd.mall.application.command.auth.AdminLoginCommand;
+import com.ddd.mall.application.command.auth.AdminLoginResult;
+import com.ddd.mall.application.command.auth.AuthApplicationService;
+import com.ddd.mall.application.command.auth.MemberLoginCommand;
+import com.ddd.mall.application.command.auth.MemberLoginResult;
 import com.ddd.mall.web.request.auth.LoginRequest;
 import com.ddd.mall.web.response.ApiResponse;
 import jakarta.validation.Valid;
@@ -22,8 +23,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class AuthController {
 
-    private final AdminLoginHandler adminLoginHandler;
-    private final MemberLoginHandler memberLoginHandler;
+    private final AuthApplicationService authApplicationService;
 
     /**
      * 管理员登录
@@ -32,9 +32,9 @@ public class AuthController {
      * @return 管理员登录结果
      */
     @PostMapping("/admin/login")
-    public ApiResponse<AdminLoginHandler.LoginResult> adminLogin(@Valid @RequestBody LoginRequest request) {
+    public ApiResponse<AdminLoginResult> adminLogin(@Valid @RequestBody LoginRequest request) {
         AdminLoginCommand command = new AdminLoginCommand(request.getUsername(), request.getPassword());
-        return ApiResponse.ok(adminLoginHandler.handle(command));
+        return ApiResponse.ok(authApplicationService.adminLogin(command));
     }
 
     /**
@@ -44,8 +44,8 @@ public class AuthController {
      * @return 会员登录结果
      */
     @PostMapping("/member/login")
-    public ApiResponse<MemberLoginHandler.MemberLoginResult> memberLogin(@Valid @RequestBody LoginRequest request) {
+    public ApiResponse<MemberLoginResult> memberLogin(@Valid @RequestBody LoginRequest request) {
         MemberLoginCommand command = new MemberLoginCommand(request.getUsername(), request.getPassword());
-        return ApiResponse.ok(memberLoginHandler.handle(command));
+        return ApiResponse.ok(authApplicationService.memberLogin(command));
     }
 }

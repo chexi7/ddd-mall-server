@@ -1,5 +1,6 @@
 package com.ddd.mall.application.query.order;
 
+import com.ddd.mall.application.query.order.dto.OrderDetailDto;
 import com.ddd.mall.application.query.order.dto.OrderListItemDto;
 import com.ddd.mall.application.query.support.PageResult;
 import com.ddd.mall.domain.order.Order;
@@ -8,6 +9,7 @@ import com.ddd.mall.domain.order.OrderPageSlice;
 import com.ddd.mall.domain.order.OrderRepository;
 import com.ddd.mall.domain.order.OrderStatus;
 import com.ddd.mall.domain.order.ShippingAddress;
+import com.ddd.mall.domain.shared.DomainException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -15,28 +17,51 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
- * 管理端订单分页列表
+ * 订单聚合查询服务。
  */
 @Service
 @RequiredArgsConstructor
-public class OrderListQueryHandler {
+public class OrderQueryService {
 
     private final OrderRepository orderRepository;
 
+    /**
+     * 管理端订单分页列表。
+     *
+     * @param page    页码
+     * @param size    每页条数
+     * @param status  订单状态
+     * @param keyword 搜索关键字
+     * @return 分页结果
+     */
     @Transactional(readOnly = true)
-    public PageResult<OrderListItemDto> handle(int page, int size, String status, String keyword) {
+    public PageResult<OrderListItemDto> orderList(int page, int size, String status, String keyword) {
         OrderPageSlice slice = orderRepository.findPageForAdmin(page, size, status, keyword);
-        List<OrderListItemDto> content = slice.getContent().stream().map(this::toDto).toList();
+        List<OrderListItemDto> content = slice.getContent().stream().map(this::toListItemDto).toList();
         int safePage = Math.max(page, 1);
         int safeSize = Math.max(size, 1);
         int totalPages = (int) Math.ceil((double) slice.getTotalElements() / safeSize);
         return new PageResult<>(content, slice.getTotalElements(), totalPages, safePage, safeSize);
     }
 
-    private OrderListItemDto toDto(Order order) {
+    /**
+     * 查询订单详情。
+     *
+     * @param orderNo 订单号
+     * @return 订单详情
+     */
+    @Transactional(readOnly = true)
+    public OrderDetailDto orderDetail(String orderNo) {
+        Order order = orderRepository.findByOrderNo(orderNo)
+                .orElseThrow(() -> new DomainException("订单不存在: " + orderNo));
+        return toDetailDto(order);
+    }
+
+    private OrderListItemDto toListItemDto(Order order) {
         OrderListItemDto dto = new OrderListItemDto();
         dto.setId(order.getId());
         dto.setOrderNo(order.getOrderNo());
@@ -72,6 +97,48 @@ public class OrderListQueryHandler {
         return dto;
     }
 
+    private OrderDetailDto toDetailDto(Order order) {
+        OrderDetailDto dto = new OrderDetailDto();
+        dto.setId(order.getId());
+        dto.setOrderNo(order.getOrderNo());
+        dto.setMemberId(order.getMemberId());
+        dto.setStatus(toApiStatus(order.getStatus()));
+        dto.setTotalAmount(order.getTotalAmount().getAmount());
+        dto.setCreatedAt(order.getCreatedAt());
+        dto.setUpdatedAt(Stream.of(order.getCancelledAt(), order.getCompletedAt(), order.getShippedAt(),
+                        order.getPaidAt(), order.getCreatedAt())
+                .flatMap(d -> d == null ? Stream.empty() : Stream.of(d))
+                .max(Comparator.naturalOrder())
+                .orElse(order.getCreatedAt()));
+        dto.setPaidAt(order.getPaidAt());
+
+        dto.setItems(order.getItems().stream().map(item -> {
+            OrderDetailDto.OrderItemDto itemDto = new OrderDetailDto.OrderItemDto();
+            itemDto.setId(item.getId());
+            itemDto.setProductId(item.getProductId());
+            itemDto.setProductName(item.getProductName());
+            itemDto.setSkuCode(item.getSkuId() == null ? "" : "SKU-" + item.getSkuId());
+            itemDto.setUnitPrice(item.getUnitPrice().getAmount());
+            itemDto.setQuantity(item.getQuantity());
+            itemDto.setSubtotal(item.subtotal().getAmount());
+            itemDto.setTotalPrice(item.subtotal().getAmount());
+            return itemDto;
+        }).collect(Collectors.toList()));
+
+        if (order.getShippingAddress() != null) {
+            OrderDetailDto.ShippingAddressDto addrDto = new OrderDetailDto.ShippingAddressDto();
+            addrDto.setReceiverName(order.getShippingAddress().getReceiverName());
+            addrDto.setReceiverPhone(order.getShippingAddress().getReceiverPhone());
+            addrDto.setFullAddress(order.getShippingAddress().fullAddress());
+            addrDto.setProvince(order.getShippingAddress().getProvince());
+            addrDto.setCity(order.getShippingAddress().getCity());
+            addrDto.setDistrict(order.getShippingAddress().getDistrict());
+            addrDto.setDetailAddress(order.getShippingAddress().getDetail());
+            dto.setShippingAddress(addrDto);
+        }
+        return dto;
+    }
+
     private static String resolveUpdatedAt(Order order) {
         return Stream.of(order.getCancelledAt(), order.getCompletedAt(), order.getShippedAt(),
                         order.getPaidAt(), order.getCreatedAt())
@@ -81,7 +148,7 @@ public class OrderListQueryHandler {
                 .orElse(null);
     }
 
-    static String toApiStatus(OrderStatus status) {
+    private static String toApiStatus(OrderStatus status) {
         if (status == null) {
             return null;
         }

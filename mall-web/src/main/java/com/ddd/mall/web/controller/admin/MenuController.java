@@ -1,8 +1,8 @@
 package com.ddd.mall.web.controller.admin;
 
-import com.ddd.mall.application.command.admin.cmd.CreateMenuCommand;
-import com.ddd.mall.application.command.admin.handler.CreateMenuHandler;
-import com.ddd.mall.application.query.admin.MenuTreeQueryHandler;
+import com.ddd.mall.application.command.admin.CreateMenuCommand;
+import com.ddd.mall.application.command.admin.MenuApplicationService;
+import com.ddd.mall.application.query.admin.MenuQueryService;
 import com.ddd.mall.application.query.admin.dto.MenuTreeDto;
 import com.ddd.mall.infrastructure.auth.RequireLogin;
 import com.ddd.mall.infrastructure.auth.RequirePermission;
@@ -25,8 +25,8 @@ import java.util.List;
 @RequireLogin(UserType.ADMIN)
 public class MenuController {
 
-    private final CreateMenuHandler createMenuHandler;
-    private final MenuTreeQueryHandler menuTreeQueryHandler;
+    private final MenuApplicationService menuApplicationService;
+    private final MenuQueryService menuQueryService;
 
     /**
      * 创建菜单
@@ -42,7 +42,7 @@ public class MenuController {
                 request.getPath(), request.getComponent(),
                 request.getIcon(), request.getPermissionCode(),
                 request.getType(), request.getSort());
-        return ApiResponse.ok(createMenuHandler.handle(command));
+        return ApiResponse.ok(menuApplicationService.createMenu(command));
     }
 
     /**
@@ -52,6 +52,6 @@ public class MenuController {
      */
     @GetMapping("/tree")
     public ApiResponse<List<MenuTreeDto>> getMenuTree() {
-        return ApiResponse.ok(menuTreeQueryHandler.handle());
+        return ApiResponse.ok(menuQueryService.menuTree());
     }
 }

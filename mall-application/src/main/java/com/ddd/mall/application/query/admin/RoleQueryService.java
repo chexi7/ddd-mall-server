@@ -14,16 +14,23 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * 角色分页列表
+ * 角色聚合查询服务。
  */
 @Service
 @RequiredArgsConstructor
-public class RoleListQueryHandler {
+public class RoleQueryService {
 
     private final RoleRepository roleRepository;
 
+    /**
+     * 角色分页列表。
+     *
+     * @param page 页码
+     * @param size 每页条数
+     * @return 分页结果
+     */
     @Transactional(readOnly = true)
-    public PageResult<RoleListItemDto> handle(int page, int size) {
+    public PageResult<RoleListItemDto> roleList(int page, int size) {
         List<Role> all = roleRepository.findAll().stream()
                 .sorted(Comparator.comparing(Role::getId))
                 .collect(Collectors.toList());

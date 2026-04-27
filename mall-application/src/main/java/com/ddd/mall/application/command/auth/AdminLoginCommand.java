@@ -1,11 +1,11 @@
-package com.ddd.mall.application.command.auth.cmd;
+package com.ddd.mall.application.command.auth;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
 @Getter
 @RequiredArgsConstructor
-public class MemberLoginCommand {
+public class AdminLoginCommand {
     private final String username;
     private final String password;
 }

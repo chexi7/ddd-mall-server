@@ -79,10 +79,10 @@ public class Order extends AggregateRoot {
     }
 }
 
-// 应用服务（薄层，只做编排）
-public class PayOrderHandler {
+// 应用服务（薄层，只做编排）—— 一个聚合一个 ApplicationService，方法名即业务用例
+public class OrderApplicationService {
     @Transactional
-    public void handle(PayOrderCommand command) {
+    public void payOrder(PayOrderCommand command) {
         Order order = orderRepository.findByOrderNo(command.getOrderNo())
                 .orElseThrow(() -> new DomainException("订单不存在"));
         order.pay();                       // 业务逻辑在聚合根
@@ -91,7 +91,7 @@ public class PayOrderHandler {
 }
 ```
 
-**优势**：业务规则集中在聚合根中，任何人改订单支付逻辑只需看 `Order.pay()`。
+**优势**：业务规则集中在聚合根中，任何人改订单支付逻辑只需看 `Order.pay()`。`OrderApplicationService.payOrder` 这种"聚合 + 用例"的命名让调用方一眼看出业务意图。
 
 > 参考：[后端不是CRUD](https://docs.mryqr.com/backend-is-not-crud/)
 
@@ -137,7 +137,7 @@ domain/
 ┌─────────────────────────────────────┐
 │          mall-web (接口层)            │  ← Controller、Request/Response DTO
 ├─────────────────────────────────────┤
-│      mall-application (应用层)        │  ← Command/Query Handler、事件处理器
+│      mall-application (应用层)        │  ← ApplicationService、QueryService、事件处理器
 ├─────────────────────────────────────┤
 │        mall-domain (领域层)           │  ← 聚合根、实体、值对象、领域事件、仓储接口
 ├─────────────────────────────────────┤
@@ -184,30 +184,28 @@ mall/
 │
 ├── mall-application/                     # 应用层
 │   └── application/
-│       ├── command/                      # 写操作（按聚合 + 类型分包）
+│       ├── command/                      # 写操作（按聚合扁平分包，一个聚合一个 ApplicationService）
 │       │   ├── product/
-│       │   │   ├── cmd/                  #   Command 类（入参，纯数据载体）
-│       │   │   │   ├── CreateProductCommand.java
-│       │   │   │   ├── ChangePriceCommand.java
-│       │   │   │   └── PublishProductCommand.java
-│       │   │   └── handler/              #   Handler 类（应用服务，编排逻辑）
-│       │   │       ├── CreateProductHandler.java
-│       │   │       ├── ChangePriceHandler.java
-│       │   │       └── PublishProductHandler.java
+│       │   │   ├── ProductApplicationService.java   #   聚合服务：createProduct / publishProduct / changePrice
+│       │   │   ├── CreateProductCommand.java        #   Command 类（入参，纯数据载体）
+│       │   │   ├── ChangePriceCommand.java
+│       │   │   └── PublishProductCommand.java
+│       │   ├── order/
+│       │   │   ├── OrderApplicationService.java     #   聚合服务：createOrder / payOrder / cancelOrder
+│       │   │   ├── CreateOrderCommand.java
+│       │   │   ├── PayOrderCommand.java
+│       │   │   └── CancelOrderCommand.java
+│       │   └── auth/
+│       │       ├── AuthApplicationService.java      #   认证服务：adminLogin / memberLogin
+│       │       ├── AdminLoginCommand.java
+│       │       ├── AdminLoginResult.java            #   有返回值的用例就近放 *Result
+│       │       ├── MemberLoginCommand.java
+│       │       └── MemberLoginResult.java
+│       ├── query/                        # 读操作（CQRS）—— 同样一个聚合一个 QueryService
 │       │   └── order/
-│       │       ├── cmd/
-│       │       │   ├── CreateOrderCommand.java
-│       │       │   ├── PayOrderCommand.java
-│       │       │   └── CancelOrderCommand.java
-│       │       └── handler/
-│       │           ├── CreateOrderHandler.java
-│       │           ├── PayOrderHandler.java
-│       │           └── CancelOrderHandler.java
-│       ├── query/                        # 读操作（CQRS）
-│       │   └── order/
-│       │       ├── OrderDetailQueryHandler.java
+│       │       ├── OrderQueryService.java           #   orderList / orderDetail
 │       │       └── dto/OrderDetailDto.java
-│       └── eventhandler/                 # 领域事件处理器
+│       └── eventhandler/                 # 领域事件处理器（保留 *EventHandler 命名）
 │           └── order/
 │               ├── OrderCreatedEventHandler.java
 │               └── OrderPaidEventHandler.java
@@ -242,10 +240,72 @@ mall/
 | 原则 | 说明 |
 |------|------|
 | **领域层按聚合分包** | `domain/order/`、`domain/product/`，而非 `domain/entity/`、`domain/vo/` |
-| **应用层按聚合 + 职责 + 类型分包** | `command/order/cmd/`（入参）、`command/order/handler/`（处理器）、`query/order/`（查询）、`eventhandler/order/`（事件） |
+| **应用层按聚合扁平分包** | `command/order/`、`query/order/`、`eventhandler/order/`；同聚合的 `*ApplicationService` / `*Command` / `*Result` 平铺在一起，不再嵌套 `cmd/`、`handler/`、`result/` |
 | **接口层按聚合分包** | `controller/order/`、`request/order/` |
 | **基础设施层按技术关注点分包** | `dataobject/`、`converter/`、`impl/` |
-| **所有 Handler 必须接受 Command 对象** | `handle(PayOrderCommand command)` 而非 `handle(String orderNo)`，保持入参类型安全与可扩展性 |
+| **所有 ApplicationService 方法必须接受 Command 对象** | 例如 `payOrder(PayOrderCommand command)` 而非 `payOrder(String orderNo)`，保持入参类型安全与可扩展性 |
+
+应用层命名约定：
+
+- **一个聚合一个 `*ApplicationService`，方法名即业务用例**（mryqr 推荐）。例：`OrderApplicationService` 暴露 `createOrder` / `payOrder` / `cancelOrder`，由 `MenuApplicationService.createMenu(cmd)` 直接读出业务意图。Controller 不再需要为"创建/支付/取消"各注入一个 `Create*ApplicationService`。
+- 命令入参使用 `*Command`（无业务含义的纯数据载体），有业务返回的用例使用 `*Result` 作为出参，与对应的 `*ApplicationService` 同包同层放置。
+- 查询同样按聚合归并，单聚合一个 `*QueryService`，方法名即查询用例（如 `MenuQueryService.menuTree()`、`OrderQueryService.orderList(...)`、`OrderQueryService.orderDetail(...)`）；查询读模型继续使用 `*Dto`，集中在 `dto/` 子包。
+- Controller 等 Web 层协议对象使用 `*Request` / `ApiResponse` / `PageResponse`。
+- `Handler` 后缀**仅保留给领域事件处理器**（`*EventHandler`）、框架拦截器等事件 / 技术适配场景，不再用于命令用例类。
+
+#### 4.4.1 为什么 `*Command` 后缀**不**冗余
+
+扁平化时我们删掉了 `cmd/`、`handler/`、`result/` 三个子包，但**类名后缀** `*Command` / `*Result` 必须保留。两者维度不同：
+
+| 维度 | 含义 | 例子 |
+|---|---|---|
+| 包路径 `command/admin/` | "管理员聚合"下的"写操作"分组（CQRS 分类 + 限界上下文） | `application/command/admin/` |
+| 类名后缀 `*Command` | 这是一个"命令对象"——一次用例的入参意图，不可变、纯数据载体 | `AssignPermissionsCommand` |
+
+`Command` 是 CQRS 的通用名词（与 `Event`、`Query`、`DomainEvent` 同级），保留它有三个好处：
+
+1. **在扁平包里区分角色**：同一个 `command/admin/` 下放着 `RoleApplicationService`（服务）、`AssignPermissionsCommand`（入参），靠后缀一眼识别。
+2. **名词 vs 动词不再混乱**：类 `AssignPermissionsCommand` 是名词（"分配权限"这次动作的具象），方法 `roleApplicationService.assignPermissions(cmd)` 是动词（执行）。如果类名也叫 `AssignPermissions`，调用处变成 `service.assignPermissions(new AssignPermissions(...))`，主谓全丢。
+3. **与领域术语谱系对齐**：`*Command`（未发生的意图）/ `*Event`（已发生的事实）/ `*Dto`（读模型）/ `*Result`（用例结果），形成稳定的业务名词体系。
+
+> **小结**：`cmd/` 子包冗余是因为它在**包路径维度**重复了 `command`；而 `*Command` 后缀是**类语义维度**的标识，两者不冲突。
+
+#### 4.4.2 ApplicationService 有响应时用 `*Result`，不要用 `*Response`
+
+我们的项目已经在 Controller 层占用了 `*Request` / `ApiResponse` / `PageResponse`，应用层若也叫 `*Response` 会出现两个问题：
+
+- **概念错位**：`Response` 暗示"对一次 HTTP 请求的应答"，而应用层不依赖、也不应该知道 HTTP 的存在（整洁架构原则）。
+- **歧义**：哪天 Controller 端再加一个 `LoginResponse` 做 JSON 包装，名字就会撞车。
+
+因此应用层一律使用 `*Result`，与 `*Command` 形成对称，全栈术语分工如下：
+
+| 层 | 入参 | 出参 |
+|---|---|---|
+| Web Controller | `*Request`（HTTP 请求体 DTO） | `ApiResponse<T>` / `PageResponse<T>` |
+| 应用层命令侧 | `*Command` | `*Result` / 原始类型 / `void` |
+| 应用层查询侧 | 方法参数（一般不建 Query 类） | `*Dto`、`PageResult<*Dto>` |
+| 领域层 | 聚合根方法的形参 | 聚合根 / 值对象 |
+| 领域事件 | — | `*Event`（过去式名词） |
+
+**`*Result` 命名规则**：用动词短语前缀，与对应 `*Command` 配对，与 `*ApplicationService` 同包平铺：
+
+| Command | Result |
+|---|---|
+| `AdminLoginCommand` | `AdminLoginResult` |
+| `MemberLoginCommand` | `MemberLoginResult` |
+
+#### 4.4.3 何时**不**需要新建 `*Result` 类
+
+不是每个用例都要造一个 `*Result`，按返回内容判定：
+
+| 返回内容 | 做法 | 本项目对应例子 |
+|---|---|---|
+| `void`（命令成功即可） | 不建类 | `OrderApplicationService.payOrder(cmd)` / `cancelOrder(cmd)` |
+| 单个原始类型（`Long` / `String` / `Boolean`） | 直接返回原始类型 | `MenuApplicationService.createMenu(cmd) → Long`（菜单 ID）；`OrderApplicationService.createOrder(cmd) → String`（订单号） |
+| 多字段、有内聚业务含义 | 建 `*Result` 类 | `AuthApplicationService.adminLogin(cmd) → AdminLoginResult`（token + 用户 + 角色 + 权限） |
+| 单字段但语义需要明确（很少见） | 也可建 `*Result`（值对象思路） | 如未来 `placeOrder → OrderPlacedResult { orderNo, totalAmount, expireAt }` |
+
+**经验法则**：字段数 ≥ 2，或者将来有可能扩展字段就建 `*Result`；只返回一个 ID/订单号就直接返回基础类型，避免空壳类。
 
 > 参考：[项目结构](https://docs.mryqr.com/ddd-project-structure/)
 
@@ -256,13 +316,13 @@ mall/
 ### 5.1 创建流程（新建聚合根）
 
 ```
-Controller → Handler → new AggregateRoot(...) → Repository.save()
+Controller → ApplicationService → new AggregateRoot(...) → Repository.save()
 ```
 
 ```java
-// CreateOrderHandler.java
+// OrderApplicationService.java —— 一个聚合一个服务，方法名即业务用例
 @Transactional
-public String handle(CreateOrderCommand command) {
+public String createOrder(CreateOrderCommand command) {
     List<OrderItem> items = ...;           // 构建订单项
     ShippingAddress address = ...;          // 构建值对象
 
@@ -276,13 +336,13 @@ public String handle(CreateOrderCommand command) {
 ### 5.2 更新流程（修改聚合根）
 
 ```
-Controller → Handler → Repository.findById() → AggregateRoot.doSomething() → Repository.save()
+Controller → ApplicationService → Repository.findById() → AggregateRoot.doSomething() → Repository.save()
 ```
 
 ```java
-// PayOrderHandler.java
+// OrderApplicationService.java —— 同一个聚合的另一个用例方法
 @Transactional
-public void handle(PayOrderCommand command) {
+public void payOrder(PayOrderCommand command) {
     Order order = orderRepository.findByOrderNo(command.getOrderNo())  // 1. 取出聚合根
             .orElseThrow(() -> new DomainException("订单不存在"));
     order.pay();                                                // 2. 调用业务方法
@@ -293,7 +353,7 @@ public void handle(PayOrderCommand command) {
 ### 5.3 查询流程（CQRS 读侧）
 
 ```
-Controller → QueryHandler → 直接查数据库 → 返回 DTO
+Controller → QueryService → 直接查数据库 → 返回 DTO
 ```
 
 查询不走聚合根，直接查库返回 DTO，避免加载完整聚合的开销。
@@ -322,7 +382,7 @@ Order（聚合根）
 | **业务方法代替 setter** | 不暴露 `setStatus()`，而是 `pay()`, `cancel()` | `order.pay()` 而非 `order.setStatus(PAID)` |
 | **在构造函数中校验** | 创建时就保证合法 | `if (items.isEmpty()) throw ...` |
 | **聚合间只通过 ID 引用** | Order 不持有 Product 对象，只持有 productId | `orderItem.productId` |
-| **聚合间通过事件通信** | 下单后库存预扣，用 OrderCreatedEvent | 不在 OrderHandler 里直接调 InventoryRepository |
+| **聚合间通过事件通信** | 下单后库存预扣，用 OrderCreatedEvent | 不在 `OrderApplicationService.createOrder` 里直接调 `InventoryRepository` |
 | **尽量保持聚合小** | 聚合越大，并发冲突越多 | Order 不包含 Product 的完整信息 |
 
 ### 6.3 仓储模式
@@ -409,16 +469,16 @@ public class Money {
 
 ## 8. 应用服务与领域服务
 
-### 8.1 应用服务（Application Service / Handler）
+### 8.1 应用服务（Application Service）
 
 **位置**：应用层
 **职责**：编排，不含业务逻辑
 **特征**：薄，像个指挥官——自己不干活，只协调
 
 ```java
-// 标准三部曲：取出 → 调用 → 保存
+// 标准三部曲：取出 → 调用 → 保存。方法名即业务用例，由 OrderApplicationService 持有
 @Transactional
-public void handle(PayOrderCommand command) {
+public void payOrder(PayOrderCommand command) {
     Order order = orderRepository.findByOrderNo(command.getOrderNo()).orElseThrow(...);
     order.pay();                    // 业务逻辑在聚合根
     orderRepository.save(order);    // 持久化
@@ -480,10 +540,10 @@ public class PricingService {
 
 ### 9.2 为什么需要领域事件
 
-**解决跨聚合协作问题**。下单后需要扣库存、清购物车——如果在一个 Handler 里直接调用三个仓储，聚合之间就耦合了。
+**解决跨聚合协作问题**。下单后需要扣库存、清购物车——如果在一个 ApplicationService 里直接调用三个仓储，聚合之间就耦合了。
 
 ```
-❌ 耦合方式：CreateOrderHandler 直接调用 InventoryRepository + CartRepository
+❌ 耦合方式：OrderApplicationService.createOrder 里直接调用 InventoryRepository + CartRepository
 ✅ 事件方式：Order 发布 OrderCreatedEvent → EventHandler 分别处理库存和购物车
 ```
 
@@ -557,8 +617,8 @@ public class OrderCreatedEvent implements DomainEvent {
 **命令（写）和查询（读）走不同的路径。**
 
 ```
-写（Command）：Controller → Handler → AggregateRoot → Repository.save()
-读（Query）  ：Controller → QueryHandler → 直接查数据库 → DTO
+写（Command）：Controller → ApplicationService → AggregateRoot → Repository.save()
+读（Query）  ：Controller → QueryService → 直接查数据库 → DTO
 ```
 
 ### 10.2 为什么查询不走聚合根
@@ -570,13 +630,18 @@ public class OrderCreatedEvent implements DomainEvent {
 ### 10.3 本项目的简化 CQRS
 
 ```java
-// 查询处理器：直接查库，返回 DTO
+// 查询服务：一个聚合一个 *QueryService，方法名即查询用例
 @Service
-public class OrderDetailQueryHandler {
+public class OrderQueryService {
     @Transactional(readOnly = true)
-    public OrderDetailDto handle(String orderNo) {
+    public OrderDetailDto orderDetail(String orderNo) {
         Order order = orderRepository.findByOrderNo(orderNo).orElseThrow(...);
         return toDto(order);   // 投影到 DTO
+    }
+
+    @Transactional(readOnly = true)
+    public PageResult<OrderListItemDto> orderList(int page, int size, String status, String keyword) {
+        // ...直接查库，绕过聚合根
     }
 }
 ```
@@ -656,7 +721,7 @@ public class OrderRepositoryImpl implements OrderRepository {
 | `@Getter @EqualsAndHashCode` | 值对象 | 值对象靠属性值判等 |
 | `@Getter @RequiredArgsConstructor` | Command、Event | 不可变数据载体 |
 | `@Getter @Setter` | DTO、DO | 纯数据传输对象 |
-| `@RequiredArgsConstructor` | Service、Handler | 构造器注入 |
+| `@RequiredArgsConstructor` | ApplicationService、DomainService、EventHandler | 构造器注入 |
 | `@Slf4j` | 事件处理器 | 日志 |
 
 ### 12.2 禁止用法
@@ -706,7 +771,7 @@ public class Order extends AggregateRoot {
 
 ### Q3: 聚合之间怎么通信？
 
-**通过领域事件**。`Order` 创建后发布 `OrderCreatedEvent`，`OrderCreatedEventHandler` 监听并操作 `Inventory` 聚合。不要在一个 Handler 中同时操作多个聚合的仓储。
+**通过领域事件**。`Order` 创建后发布 `OrderCreatedEvent`，`OrderCreatedEventHandler` 监听并操作 `Inventory` 聚合。不要在一个 ApplicationService 中同时操作多个聚合的仓储。
 
 ### Q4: 仓储接口应该有哪些方法？
 

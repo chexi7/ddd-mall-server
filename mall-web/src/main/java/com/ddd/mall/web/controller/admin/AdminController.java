@@ -1,10 +1,9 @@
 package com.ddd.mall.web.controller.admin;
 
-import com.ddd.mall.application.command.admin.cmd.AssignRolesCommand;
-import com.ddd.mall.application.command.admin.cmd.CreateAdminCommand;
-import com.ddd.mall.application.command.admin.handler.AssignRolesHandler;
-import com.ddd.mall.application.command.admin.handler.CreateAdminHandler;
-import com.ddd.mall.application.query.admin.AdminListQueryHandler;
+import com.ddd.mall.application.command.admin.AdminApplicationService;
+import com.ddd.mall.application.command.admin.AssignRolesCommand;
+import com.ddd.mall.application.command.admin.CreateAdminCommand;
+import com.ddd.mall.application.query.admin.AdminQueryService;
 import com.ddd.mall.application.query.admin.dto.AdminListItemDto;
 import com.ddd.mall.application.query.support.PageResult;
 import com.ddd.mall.infrastructure.auth.RequireLogin;
@@ -28,9 +27,8 @@ import org.springframework.web.bind.annotation.*;
 @RequireLogin(UserType.ADMIN)
 public class AdminController {
 
-    private final CreateAdminHandler createAdminHandler;
-    private final AssignRolesHandler assignRolesHandler;
-    private final AdminListQueryHandler adminListQueryHandler;
+    private final AdminApplicationService adminApplicationService;
+    private final AdminQueryService adminQueryService;
 
     /**
      * 分页查询管理员列表
@@ -40,7 +38,7 @@ public class AdminController {
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(required = false) String keyword) {
-        PageResult<AdminListItemDto> r = adminListQueryHandler.handle(page, size, keyword);
+        PageResult<AdminListItemDto> r = adminQueryService.adminList(page, size, keyword);
         return ApiResponse.ok(new PageResponse<>(
                 r.getContent(), r.getTotalElements(), r.getTotalPages(), r.getPage(), r.getSize()));
     }
@@ -57,7 +55,7 @@ public class AdminController {
         CreateAdminCommand command = new CreateAdminCommand(
                 request.getUsername(), request.getPassword(), request.getRealName(),
                 request.getPhone(), request.getEmail());
-        return ApiResponse.ok(createAdminHandler.handle(command));
+        return ApiResponse.ok(adminApplicationService.createAdmin(command));
     }
 
     /**
@@ -71,7 +69,7 @@ public class AdminController {
     @RequirePermission("admin:assign-role")
     public ApiResponse<Void> assignRoles(@PathVariable Long id,
                                          @Valid @RequestBody AssignRolesRequest request) {
-        assignRolesHandler.handle(new AssignRolesCommand(id, request.getRoleIds()));
+        adminApplicationService.assignRoles(new AssignRolesCommand(id, request.getRoleIds()));
         return ApiResponse.ok();
     }
 }

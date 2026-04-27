@@ -13,26 +13,34 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
- * 菜单树查询（构建树形结构）
+ * 菜单聚合查询服务（构建树形结构）。
  */
 @Service
 @RequiredArgsConstructor
-public class MenuTreeQueryHandler {
+public class MenuQueryService {
 
     private final MenuRepository menuRepository;
 
+    /**
+     * 查询全量菜单树。
+     *
+     * @return 菜单树列表
+     */
     @Transactional(readOnly = true)
-    public List<MenuTreeDto> handle() {
+    public List<MenuTreeDto> menuTree() {
         List<Menu> allMenus = menuRepository.findAll();
         List<MenuTreeDto> dtos = allMenus.stream().map(this::toDto).collect(Collectors.toList());
         return buildTree(dtos);
     }
 
     /**
-     * 查询指定权限码对应的菜单树（用于登录后返回用户有权限的菜单）
+     * 查询指定权限码对应的菜单树（用于登录后返回用户有权限的菜单）。
+     *
+     * @param permissionCodes 权限码列表
+     * @return 菜单树列表
      */
     @Transactional(readOnly = true)
-    public List<MenuTreeDto> handleByPermissionCodes(List<String> permissionCodes) {
+    public List<MenuTreeDto> menuTreeByPermissionCodes(List<String> permissionCodes) {
         List<Menu> menus = menuRepository.findByPermissionCodes(permissionCodes);
         List<MenuTreeDto> dtos = menus.stream().map(this::toDto).collect(Collectors.toList());
         return buildTree(dtos);

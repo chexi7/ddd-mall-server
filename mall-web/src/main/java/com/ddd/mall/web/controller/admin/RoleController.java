@@ -1,10 +1,9 @@
 package com.ddd.mall.web.controller.admin;
 
-import com.ddd.mall.application.command.admin.cmd.AssignPermissionsCommand;
-import com.ddd.mall.application.command.admin.cmd.CreateRoleCommand;
-import com.ddd.mall.application.command.admin.handler.AssignPermissionsHandler;
-import com.ddd.mall.application.command.admin.handler.CreateRoleHandler;
-import com.ddd.mall.application.query.admin.RoleListQueryHandler;
+import com.ddd.mall.application.command.admin.AssignPermissionsCommand;
+import com.ddd.mall.application.command.admin.CreateRoleCommand;
+import com.ddd.mall.application.command.admin.RoleApplicationService;
+import com.ddd.mall.application.query.admin.RoleQueryService;
 import com.ddd.mall.application.query.admin.dto.RoleListItemDto;
 import com.ddd.mall.application.query.support.PageResult;
 import com.ddd.mall.infrastructure.auth.RequireLogin;
@@ -28,9 +27,8 @@ import org.springframework.web.bind.annotation.*;
 @RequireLogin(UserType.ADMIN)
 public class RoleController {
 
-    private final CreateRoleHandler createRoleHandler;
-    private final AssignPermissionsHandler assignPermissionsHandler;
-    private final RoleListQueryHandler roleListQueryHandler;
+    private final RoleApplicationService roleApplicationService;
+    private final RoleQueryService roleQueryService;
 
     /**
      * 分页查询角色列表
@@ -39,7 +37,7 @@ public class RoleController {
     public ApiResponse<PageResponse<RoleListItemDto>> listRoles(
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int size) {
-        PageResult<RoleListItemDto> r = roleListQueryHandler.handle(page, size);
+        PageResult<RoleListItemDto> r = roleQueryService.roleList(page, size);
         return ApiResponse.ok(new PageResponse<>(
                 r.getContent(), r.getTotalElements(), r.getTotalPages(), r.getPage(), r.getSize()));
     }
@@ -55,7 +53,7 @@ public class RoleController {
     public ApiResponse<Long> createRole(@Valid @RequestBody CreateRoleRequest request) {
         CreateRoleCommand command = new CreateRoleCommand(
                 request.getName(), request.getCode(), request.getDescription());
-        return ApiResponse.ok(createRoleHandler.handle(command));
+        return ApiResponse.ok(roleApplicationService.createRole(command));
     }
 
     /**
@@ -69,7 +67,7 @@ public class RoleController {
     @RequirePermission("role:assign-permission")
     public ApiResponse<Void> assignPermissions(@PathVariable Long id,
                                                @Valid @RequestBody AssignPermissionsRequest request) {
-        assignPermissionsHandler.handle(new AssignPermissionsCommand(id, request.getPermissionCodes()));
+        roleApplicationService.assignPermissions(new AssignPermissionsCommand(id, request.getPermissionCodes()));
         return ApiResponse.ok();
     }
 }

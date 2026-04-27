@@ -1,13 +1,13 @@
-package com.ddd.mall.application.command.auth.handler;
+package com.ddd.mall.application.command.auth;
 
-import com.ddd.mall.application.command.auth.cmd.AdminLoginCommand;
-import com.ddd.mall.domain.shared.TokenService;
 import com.ddd.mall.domain.admin.Admin;
 import com.ddd.mall.domain.admin.AdminRepository;
 import com.ddd.mall.domain.admin.Role;
 import com.ddd.mall.domain.admin.RoleRepository;
+import com.ddd.mall.domain.member.Member;
+import com.ddd.mall.domain.member.MemberRepository;
 import com.ddd.mall.domain.shared.DomainException;
-import lombok.Getter;
+import com.ddd.mall.domain.shared.TokenService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -16,15 +16,25 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+/**
+ * 认证相关应用服务，承接管理端与会员端的登录用例。
+ */
 @Service
 @RequiredArgsConstructor
-public class AdminLoginHandler {
+public class AuthApplicationService {
 
     private final AdminRepository adminRepository;
     private final RoleRepository roleRepository;
+    private final MemberRepository memberRepository;
     private final TokenService tokenService;
 
-    public LoginResult handle(AdminLoginCommand command) {
+    /**
+     * 管理员登录。
+     *
+     * @param command 管理员登录命令
+     * @return 管理员登录结果
+     */
+    public AdminLoginResult adminLogin(AdminLoginCommand command) {
         Admin admin = adminRepository.findByUsername(command.getUsername())
                 .orElseThrow(() -> new DomainException("用户名或密码错误"));
 
@@ -43,17 +53,24 @@ public class AdminLoginHandler {
         }
 
         String token = tokenService.generateAdminToken(admin.getId(), admin.getUsername(), roleNames, permissions);
-        return new LoginResult(token, admin.getId(), admin.getUsername(), admin.getRealName(), roleNames, permissions);
+        return new AdminLoginResult(token, admin.getId(), admin.getUsername(), admin.getRealName(), roleNames, permissions);
     }
 
-    @Getter
-    @RequiredArgsConstructor
-    public static class LoginResult {
-        private final String token;
-        private final Long userId;
-        private final String username;
-        private final String realName;
-        private final List<String> roles;
-        private final Set<String> permissions;
+    /**
+     * 会员登录。
+     *
+     * @param command 会员登录命令
+     * @return 会员登录结果
+     */
+    public MemberLoginResult memberLogin(MemberLoginCommand command) {
+        Member member = memberRepository.findByUsername(command.getUsername())
+                .orElseThrow(() -> new DomainException("用户名或密码错误"));
+
+        if (!member.getPassword().equals(command.getPassword())) {
+            throw new DomainException("用户名或密码错误");
+        }
+
+        String token = tokenService.generateMemberToken(member.getId(), member.getUsername());
+        return new MemberLoginResult(token, member.getId(), member.getUsername(), member.getNickname());
     }
 }

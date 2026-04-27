@@ -1,6 +1,6 @@
 package com.ddd.mall.web.controller.admin;
 
-import com.ddd.mall.application.query.order.OrderListQueryHandler;
+import com.ddd.mall.application.query.order.OrderQueryService;
 import com.ddd.mall.application.query.order.dto.OrderListItemDto;
 import com.ddd.mall.application.query.support.PageResult;
 import com.ddd.mall.infrastructure.auth.RequireLogin;
@@ -23,7 +23,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequireLogin(UserType.ADMIN)
 public class AdminOrderController {
 
-    private final OrderListQueryHandler orderListQueryHandler;
+    private final OrderQueryService orderQueryService;
 
     @GetMapping
     @RequirePermission("order:view")
@@ -32,7 +32,7 @@ public class AdminOrderController {
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String keyword) {
-        PageResult<OrderListItemDto> r = orderListQueryHandler.handle(page, size, status, keyword);
+        PageResult<OrderListItemDto> r = orderQueryService.orderList(page, size, status, keyword);
         return ApiResponse.ok(new PageResponse<>(
                 r.getContent(), r.getTotalElements(), r.getTotalPages(), r.getPage(), r.getSize()));
     }
