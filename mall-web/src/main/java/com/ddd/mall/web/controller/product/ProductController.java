@@ -13,7 +13,7 @@ import com.ddd.mall.infrastructure.persistence.dataobject.ProductSkuDO;
 import com.ddd.mall.web.request.product.ChangePriceRequest;
 import com.ddd.mall.web.request.product.CreateProductRequest;
 import com.ddd.mall.web.response.ApiResponse;
-import com.ddd.mall.web.response.product.PageResponse;
+import com.ddd.mall.web.response.PageResponse;
 import com.ddd.mall.web.response.product.ProductSkuView;
 import com.ddd.mall.web.response.product.ProductView;
 import jakarta.validation.Valid;

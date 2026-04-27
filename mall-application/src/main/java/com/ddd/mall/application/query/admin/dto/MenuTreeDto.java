@@ -18,6 +18,11 @@ public class MenuTreeDto {
     private String permissionCode;
     private String type;
     private Integer sort;
+    /**
+     * 与前端字段 orderNum 对齐，取值同 sort
+     */
+    private Integer orderNum;
     private Boolean visible;
+    private String createdAt;
     private List<MenuTreeDto> children = new ArrayList<>();
 }

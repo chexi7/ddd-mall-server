@@ -4,12 +4,16 @@ import com.ddd.mall.application.command.admin.AssignRolesCommand;
 import com.ddd.mall.application.command.admin.AssignRolesHandler;
 import com.ddd.mall.application.command.admin.CreateAdminCommand;
 import com.ddd.mall.application.command.admin.CreateAdminHandler;
+import com.ddd.mall.application.query.admin.AdminListQueryHandler;
+import com.ddd.mall.application.query.admin.dto.AdminListItemDto;
+import com.ddd.mall.application.query.support.PageResult;
 import com.ddd.mall.infrastructure.auth.RequireLogin;
 import com.ddd.mall.infrastructure.auth.RequirePermission;
 import com.ddd.mall.infrastructure.auth.UserType;
 import com.ddd.mall.web.request.admin.AssignRolesRequest;
 import com.ddd.mall.web.request.admin.CreateAdminRequest;
 import com.ddd.mall.web.response.ApiResponse;
+import com.ddd.mall.web.response.PageResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -26,6 +30,20 @@ public class AdminController {
 
     private final CreateAdminHandler createAdminHandler;
     private final AssignRolesHandler assignRolesHandler;
+    private final AdminListQueryHandler adminListQueryHandler;
+
+    /**
+     * 分页查询管理员列表
+     */
+    @GetMapping
+    public ApiResponse<PageResponse<AdminListItemDto>> listAdmins(
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String keyword) {
+        PageResult<AdminListItemDto> r = adminListQueryHandler.handle(page, size, keyword);
+        return ApiResponse.ok(new PageResponse<>(
+                r.getContent(), r.getTotalElements(), r.getTotalPages(), r.getPage(), r.getSize()));
+    }
 
     /**
      * 创建管理员

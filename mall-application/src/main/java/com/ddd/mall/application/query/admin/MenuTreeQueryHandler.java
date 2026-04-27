@@ -49,7 +49,9 @@ public class MenuTreeQueryHandler {
         dto.setPermissionCode(menu.getPermissionCode());
         dto.setType(menu.getType().name());
         dto.setSort(menu.getSort());
+        dto.setOrderNum(menu.getSort());
         dto.setVisible(menu.getVisible());
+        dto.setCreatedAt(menu.getCreatedAt() == null ? null : menu.getCreatedAt().toString());
         return dto;
     }
 

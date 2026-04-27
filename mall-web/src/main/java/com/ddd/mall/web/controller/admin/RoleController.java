@@ -4,12 +4,16 @@ import com.ddd.mall.application.command.admin.AssignPermissionsCommand;
 import com.ddd.mall.application.command.admin.AssignPermissionsHandler;
 import com.ddd.mall.application.command.admin.CreateRoleCommand;
 import com.ddd.mall.application.command.admin.CreateRoleHandler;
+import com.ddd.mall.application.query.admin.RoleListQueryHandler;
+import com.ddd.mall.application.query.admin.dto.RoleListItemDto;
+import com.ddd.mall.application.query.support.PageResult;
 import com.ddd.mall.infrastructure.auth.RequireLogin;
 import com.ddd.mall.infrastructure.auth.RequirePermission;
 import com.ddd.mall.infrastructure.auth.UserType;
 import com.ddd.mall.web.request.admin.AssignPermissionsRequest;
 import com.ddd.mall.web.request.admin.CreateRoleRequest;
 import com.ddd.mall.web.response.ApiResponse;
+import com.ddd.mall.web.response.PageResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -26,6 +30,19 @@ public class RoleController {
 
     private final CreateRoleHandler createRoleHandler;
     private final AssignPermissionsHandler assignPermissionsHandler;
+    private final RoleListQueryHandler roleListQueryHandler;
+
+    /**
+     * 分页查询角色列表
+     */
+    @GetMapping
+    public ApiResponse<PageResponse<RoleListItemDto>> listRoles(
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        PageResult<RoleListItemDto> r = roleListQueryHandler.handle(page, size);
+        return ApiResponse.ok(new PageResponse<>(
+                r.getContent(), r.getTotalElements(), r.getTotalPages(), r.getPage(), r.getSize()));
+    }
 
     /**
      * 创建角色

@@ -11,8 +11,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import org.springframework.data.domain.Sort;
+
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Repository
 @RequiredArgsConstructor
@@ -34,6 +37,13 @@ public class AdminRepositoryImpl implements AdminRepository {
     @Override
     public boolean existsByUsername(String username) {
         return adminJpaRepository.existsByUsername(username);
+    }
+
+    @Override
+    public List<Admin> findAllAdmins() {
+        return adminJpaRepository.findAll(Sort.by(Sort.Direction.ASC, "id")).stream()
+                .map(this::toDomainWithRoles)
+                .collect(Collectors.toList());
     }
 
     @Override

@@ -18,16 +18,20 @@ public class OrderDetailDto {
     private List<OrderItemDto> items;
     private ShippingAddressDto shippingAddress;
     private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
     private LocalDateTime paidAt;
 
     @Getter
     @Setter
     public static class OrderItemDto {
+        private Long id;
         private Long productId;
         private String productName;
+        private String skuCode;
         private BigDecimal unitPrice;
         private int quantity;
         private BigDecimal subtotal;
+        private BigDecimal totalPrice;
     }
 
     @Getter
@@ -36,5 +40,9 @@ public class OrderDetailDto {
         private String receiverName;
         private String receiverPhone;
         private String fullAddress;
+        private String province;
+        private String city;
+        private String district;
+        private String detailAddress;
     }
 }
