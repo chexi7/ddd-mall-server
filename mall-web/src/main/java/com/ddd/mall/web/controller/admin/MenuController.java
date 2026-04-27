@@ -1,7 +1,7 @@
 package com.ddd.mall.web.controller.admin;
 
-import com.ddd.mall.application.command.admin.CreateMenuCommand;
-import com.ddd.mall.application.command.admin.CreateMenuHandler;
+import com.ddd.mall.application.command.admin.cmd.CreateMenuCommand;
+import com.ddd.mall.application.command.admin.handler.CreateMenuHandler;
 import com.ddd.mall.application.query.admin.MenuTreeQueryHandler;
 import com.ddd.mall.application.query.admin.dto.MenuTreeDto;
 import com.ddd.mall.infrastructure.auth.RequireLogin;

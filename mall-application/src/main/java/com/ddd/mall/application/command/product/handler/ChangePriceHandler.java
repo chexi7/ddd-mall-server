@@ -1,5 +1,6 @@
-package com.ddd.mall.application.command.product;
+package com.ddd.mall.application.command.product.handler;
 
+import com.ddd.mall.application.command.product.cmd.ChangePriceCommand;
 import com.ddd.mall.domain.product.Product;
 import com.ddd.mall.domain.product.ProductRepository;
 import com.ddd.mall.domain.shared.DomainException;

@@ -1,5 +1,6 @@
-package com.ddd.mall.application.command.order;
+package com.ddd.mall.application.command.order.handler;
 
+import com.ddd.mall.application.command.order.cmd.CreateOrderCommand;
 import com.ddd.mall.domain.order.Order;
 import com.ddd.mall.domain.order.OrderItem;
 import com.ddd.mall.domain.order.OrderRepository;

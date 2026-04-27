@@ -1,5 +1,6 @@
-package com.ddd.mall.application.command.auth;
+package com.ddd.mall.application.command.auth.handler;
 
+import com.ddd.mall.application.command.auth.cmd.MemberLoginCommand;
 import com.ddd.mall.domain.shared.TokenService;
 import com.ddd.mall.domain.member.Member;
 import com.ddd.mall.domain.member.MemberRepository;

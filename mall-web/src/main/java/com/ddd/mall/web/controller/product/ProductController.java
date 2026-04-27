@@ -1,11 +1,11 @@
 package com.ddd.mall.web.controller.product;
 
-import com.ddd.mall.application.command.product.ChangePriceCommand;
-import com.ddd.mall.application.command.product.ChangePriceHandler;
-import com.ddd.mall.application.command.product.CreateProductCommand;
-import com.ddd.mall.application.command.product.CreateProductHandler;
-import com.ddd.mall.application.command.product.PublishProductCommand;
-import com.ddd.mall.application.command.product.PublishProductHandler;
+import com.ddd.mall.application.command.product.cmd.ChangePriceCommand;
+import com.ddd.mall.application.command.product.cmd.CreateProductCommand;
+import com.ddd.mall.application.command.product.cmd.PublishProductCommand;
+import com.ddd.mall.application.command.product.handler.ChangePriceHandler;
+import com.ddd.mall.application.command.product.handler.CreateProductHandler;
+import com.ddd.mall.application.command.product.handler.PublishProductHandler;
 import com.ddd.mall.domain.product.ProductStatus;
 import com.ddd.mall.infrastructure.persistence.ProductJpaRepository;
 import com.ddd.mall.infrastructure.persistence.dataobject.ProductDO;

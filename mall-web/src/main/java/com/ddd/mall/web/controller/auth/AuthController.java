@@ -1,9 +1,9 @@
 package com.ddd.mall.web.controller.auth;
 
-import com.ddd.mall.application.command.auth.AdminLoginCommand;
-import com.ddd.mall.application.command.auth.AdminLoginHandler;
-import com.ddd.mall.application.command.auth.MemberLoginCommand;
-import com.ddd.mall.application.command.auth.MemberLoginHandler;
+import com.ddd.mall.application.command.auth.cmd.AdminLoginCommand;
+import com.ddd.mall.application.command.auth.cmd.MemberLoginCommand;
+import com.ddd.mall.application.command.auth.handler.AdminLoginHandler;
+import com.ddd.mall.application.command.auth.handler.MemberLoginHandler;
 import com.ddd.mall.web.request.auth.LoginRequest;
 import com.ddd.mall.web.response.ApiResponse;
 import jakarta.validation.Valid;

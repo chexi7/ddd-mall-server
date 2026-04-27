@@ -1,9 +1,11 @@
 package com.ddd.mall.web.controller.order;
 
-import com.ddd.mall.application.command.order.CancelOrderHandler;
-import com.ddd.mall.application.command.order.CreateOrderCommand;
-import com.ddd.mall.application.command.order.CreateOrderHandler;
-import com.ddd.mall.application.command.order.PayOrderHandler;
+import com.ddd.mall.application.command.order.cmd.CancelOrderCommand;
+import com.ddd.mall.application.command.order.cmd.CreateOrderCommand;
+import com.ddd.mall.application.command.order.cmd.PayOrderCommand;
+import com.ddd.mall.application.command.order.handler.CancelOrderHandler;
+import com.ddd.mall.application.command.order.handler.CreateOrderHandler;
+import com.ddd.mall.application.command.order.handler.PayOrderHandler;
 import com.ddd.mall.application.query.order.OrderDetailQueryHandler;
 import com.ddd.mall.application.query.order.dto.OrderDetailDto;
 import com.ddd.mall.web.request.order.CreateOrderRequest;
@@ -60,7 +62,7 @@ public class OrderController {
      */
     @PostMapping("/{orderNo}/pay")
     public ApiResponse<Void> payOrder(@PathVariable String orderNo) {
-        payOrderHandler.handle(orderNo);
+        payOrderHandler.handle(new PayOrderCommand(orderNo));
         return ApiResponse.ok();
     }
 
@@ -72,7 +74,7 @@ public class OrderController {
      */
     @PostMapping("/{orderNo}/cancel")
     public ApiResponse<Void> cancelOrder(@PathVariable String orderNo) {
-        cancelOrderHandler.handle(orderNo);
+        cancelOrderHandler.handle(new CancelOrderCommand(orderNo));
         return ApiResponse.ok();
     }
 

@@ -1,4 +1,4 @@
-package com.ddd.mall.application.command.admin;
+package com.ddd.mall.application.command.admin.cmd;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;

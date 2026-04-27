@@ -1,9 +1,9 @@
 package com.ddd.mall.web.controller.admin;
 
-import com.ddd.mall.application.command.admin.AssignRolesCommand;
-import com.ddd.mall.application.command.admin.AssignRolesHandler;
-import com.ddd.mall.application.command.admin.CreateAdminCommand;
-import com.ddd.mall.application.command.admin.CreateAdminHandler;
+import com.ddd.mall.application.command.admin.cmd.AssignRolesCommand;
+import com.ddd.mall.application.command.admin.cmd.CreateAdminCommand;
+import com.ddd.mall.application.command.admin.handler.AssignRolesHandler;
+import com.ddd.mall.application.command.admin.handler.CreateAdminHandler;
 import com.ddd.mall.application.query.admin.AdminListQueryHandler;
 import com.ddd.mall.application.query.admin.dto.AdminListItemDto;
 import com.ddd.mall.application.query.support.PageResult;

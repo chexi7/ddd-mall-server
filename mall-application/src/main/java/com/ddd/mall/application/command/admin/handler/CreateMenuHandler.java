@@ -1,5 +1,6 @@
-package com.ddd.mall.application.command.admin;
+package com.ddd.mall.application.command.admin.handler;
 
+import com.ddd.mall.application.command.admin.cmd.CreateMenuCommand;
 import com.ddd.mall.domain.admin.Menu;
 import com.ddd.mall.domain.admin.MenuRepository;
 import com.ddd.mall.domain.admin.MenuType;

@@ -1,5 +1,6 @@
-package com.ddd.mall.application.command.auth;
+package com.ddd.mall.application.command.auth.handler;
 
+import com.ddd.mall.application.command.auth.cmd.AdminLoginCommand;
 import com.ddd.mall.domain.shared.TokenService;
 import com.ddd.mall.domain.admin.Admin;
 import com.ddd.mall.domain.admin.AdminRepository;

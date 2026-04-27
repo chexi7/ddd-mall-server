@@ -1,4 +1,4 @@
-package com.ddd.mall.application.command.auth;
+package com.ddd.mall.application.command.auth.cmd;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;

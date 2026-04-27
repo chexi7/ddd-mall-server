@@ -82,8 +82,8 @@ public class Order extends AggregateRoot {
 // 应用服务（薄层，只做编排）
 public class PayOrderHandler {
     @Transactional
-    public void handle(String orderNo) {
-        Order order = orderRepository.findByOrderNo(orderNo)
+    public void handle(PayOrderCommand command) {
+        Order order = orderRepository.findByOrderNo(command.getOrderNo())
                 .orElseThrow(() -> new DomainException("订单不存在"));
         order.pay();                       // 业务逻辑在聚合根
         orderRepository.save(order);       // 持久化 + 发布事件
@@ -184,13 +184,25 @@ mall/
 │
 ├── mall-application/                     # 应用层
 │   └── application/
-│       ├── command/                      # 写操作（按聚合分包）
+│       ├── command/                      # 写操作（按聚合 + 类型分包）
 │       │   ├── product/
-│       │   │   ├── CreateProductCommand.java
-│       │   │   └── CreateProductHandler.java
+│       │   │   ├── cmd/                  #   Command 类（入参，纯数据载体）
+│       │   │   │   ├── CreateProductCommand.java
+│       │   │   │   ├── ChangePriceCommand.java
+│       │   │   │   └── PublishProductCommand.java
+│       │   │   └── handler/              #   Handler 类（应用服务，编排逻辑）
+│       │   │       ├── CreateProductHandler.java
+│       │   │       ├── ChangePriceHandler.java
+│       │   │       └── PublishProductHandler.java
 │       │   └── order/
-│       │       ├── CreateOrderCommand.java
-│       │       └── CreateOrderHandler.java
+│       │       ├── cmd/
+│       │       │   ├── CreateOrderCommand.java
+│       │       │   ├── PayOrderCommand.java
+│       │       │   └── CancelOrderCommand.java
+│       │       └── handler/
+│       │           ├── CreateOrderHandler.java
+│       │           ├── PayOrderHandler.java
+│       │           └── CancelOrderHandler.java
 │       ├── query/                        # 读操作（CQRS）
 │       │   └── order/
 │       │       ├── OrderDetailQueryHandler.java
@@ -230,9 +242,10 @@ mall/
 | 原则 | 说明 |
 |------|------|
 | **领域层按聚合分包** | `domain/order/`、`domain/product/`，而非 `domain/entity/`、`domain/vo/` |
-| **应用层按聚合 + 职责分包** | `command/order/`、`query/order/`、`eventhandler/order/` |
+| **应用层按聚合 + 职责 + 类型分包** | `command/order/cmd/`（入参）、`command/order/handler/`（处理器）、`query/order/`（查询）、`eventhandler/order/`（事件） |
 | **接口层按聚合分包** | `controller/order/`、`request/order/` |
 | **基础设施层按技术关注点分包** | `dataobject/`、`converter/`、`impl/` |
+| **所有 Handler 必须接受 Command 对象** | `handle(PayOrderCommand command)` 而非 `handle(String orderNo)`，保持入参类型安全与可扩展性 |
 
 > 参考：[项目结构](https://docs.mryqr.com/ddd-project-structure/)
 
@@ -269,8 +282,8 @@ Controller → Handler → Repository.findById() → AggregateRoot.doSomething()
 ```java
 // PayOrderHandler.java
 @Transactional
-public void handle(String orderNo) {
-    Order order = orderRepository.findByOrderNo(orderNo)      // 1. 取出聚合根
+public void handle(PayOrderCommand command) {
+    Order order = orderRepository.findByOrderNo(command.getOrderNo())  // 1. 取出聚合根
             .orElseThrow(() -> new DomainException("订单不存在"));
     order.pay();                                                // 2. 调用业务方法
     orderRepository.save(order);                                // 3. 保存 + 发布事件
@@ -405,8 +418,8 @@ public class Money {
 ```java
 // 标准三部曲：取出 → 调用 → 保存
 @Transactional
-public void handle(String orderNo) {
-    Order order = orderRepository.findByOrderNo(orderNo).orElseThrow(...);
+public void handle(PayOrderCommand command) {
+    Order order = orderRepository.findByOrderNo(command.getOrderNo()).orElseThrow(...);
     order.pay();                    // 业务逻辑在聚合根
     orderRepository.save(order);    // 持久化
 }

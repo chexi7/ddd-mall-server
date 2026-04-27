@@ -1,5 +1,6 @@
-package com.ddd.mall.application.command.admin;
+package com.ddd.mall.application.command.admin.handler;
 
+import com.ddd.mall.application.command.admin.cmd.AssignRolesCommand;
 import com.ddd.mall.domain.admin.Admin;
 import com.ddd.mall.domain.admin.AdminRepository;
 import com.ddd.mall.domain.shared.DomainException;

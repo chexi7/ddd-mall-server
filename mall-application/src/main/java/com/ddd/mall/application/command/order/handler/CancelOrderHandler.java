@@ -1,5 +1,6 @@
-package com.ddd.mall.application.command.order;
+package com.ddd.mall.application.command.order.handler;
 
+import com.ddd.mall.application.command.order.cmd.CancelOrderCommand;
 import com.ddd.mall.domain.order.Order;
 import com.ddd.mall.domain.order.OrderRepository;
 import com.ddd.mall.domain.shared.DomainException;
@@ -14,9 +15,9 @@ public class CancelOrderHandler {
     private final OrderRepository orderRepository;
 
     @Transactional
-    public void handle(String orderNo) {
-        Order order = orderRepository.findByOrderNo(orderNo)
-                .orElseThrow(() -> new DomainException("订单不存在: " + orderNo));
+    public void handle(CancelOrderCommand command) {
+        Order order = orderRepository.findByOrderNo(command.getOrderNo())
+                .orElseThrow(() -> new DomainException("订单不存在: " + command.getOrderNo()));
         order.cancel();
         orderRepository.save(order);
     }
