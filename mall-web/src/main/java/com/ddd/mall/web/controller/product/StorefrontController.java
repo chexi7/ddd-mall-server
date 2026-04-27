@@ -5,6 +5,9 @@ import com.ddd.mall.infrastructure.persistence.ProductJpaRepository;
 import com.ddd.mall.infrastructure.persistence.dataobject.ProductDO;
 import com.ddd.mall.infrastructure.persistence.dataobject.ProductSkuDO;
 import com.ddd.mall.web.response.ApiResponse;
+import com.ddd.mall.web.response.product.CategoryView;
+import com.ddd.mall.web.response.product.ProductSkuView;
+import com.ddd.mall.web.response.product.ProductView;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -48,8 +51,8 @@ public class StorefrontController {
      * @return 推荐商品列表
      */
     @GetMapping("/home/recommend")
-    public ApiResponse<List<ProductController.ProductView>> recommendProducts() {
-        List<ProductController.ProductView> products = findOnSaleProducts().stream()
+    public ApiResponse<List<ProductView>> recommendProducts() {
+        List<ProductView> products = findOnSaleProducts().stream()
                 .limit(6)
                 .map(product -> toProductView(product, buildCategoryIdMap()))
                 .toList();
@@ -62,8 +65,8 @@ public class StorefrontController {
      * @return 热门商品列表
      */
     @GetMapping("/home/hot")
-    public ApiResponse<List<ProductController.ProductView>> hotProducts() {
-        List<ProductController.ProductView> products = findOnSaleProducts().stream()
+    public ApiResponse<List<ProductView>> hotProducts() {
+        List<ProductView> products = findOnSaleProducts().stream()
                 .sorted(Comparator.comparing(ProductDO::getPrice, Comparator.nullsLast(Comparator.reverseOrder()))
                         .thenComparing(ProductDO::getCreatedAt, Comparator.nullsLast(Comparator.reverseOrder())))
                 .limit(6)
@@ -92,11 +95,11 @@ public class StorefrontController {
         return categoryIdMap;
     }
 
-    private ProductController.ProductView toProductView(ProductDO product, Map<String, Long> categoryIdMap) {
-        List<ProductController.ProductSkuView> skuViews = product.getSkus() == null ? List.of() : product.getSkus().stream()
+    private ProductView toProductView(ProductDO product, Map<String, Long> categoryIdMap) {
+        List<ProductSkuView> skuViews = product.getSkus() == null ? List.of() : product.getSkus().stream()
                 .map(this::toProductSkuView)
                 .toList();
-        return new ProductController.ProductView(
+        return new ProductView(
                 product.getId(),
                 product.getName(),
                 product.getDescription(),
@@ -109,9 +112,9 @@ public class StorefrontController {
         );
     }
 
-    private ProductController.ProductSkuView toProductSkuView(ProductSkuDO sku) {
+    private ProductSkuView toProductSkuView(ProductSkuDO sku) {
         BigDecimal price = sku.getPrice() == null ? BigDecimal.ZERO : sku.getPrice();
-        return new ProductController.ProductSkuView(
+        return new ProductSkuView(
                 sku.getId(),
                 sku.getName() == null || sku.getName().isBlank() ? "SKU-" + sku.getId() : sku.getName(),
                 parseAttributes(sku.getAttributes()),
@@ -152,13 +155,4 @@ public class StorefrontController {
         return "DRAFT";
     }
 
-    /**
-     * 分类视图
-     */
-    public record CategoryView(Long id,
-                               String name,
-                               Long parentId,
-                               String icon,
-                               List<CategoryView> children) {
-    }
 }

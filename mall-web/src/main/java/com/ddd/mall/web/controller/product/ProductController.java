@@ -13,6 +13,9 @@ import com.ddd.mall.infrastructure.persistence.dataobject.ProductSkuDO;
 import com.ddd.mall.web.request.product.ChangePriceRequest;
 import com.ddd.mall.web.request.product.CreateProductRequest;
 import com.ddd.mall.web.response.ApiResponse;
+import com.ddd.mall.web.response.product.PageResponse;
+import com.ddd.mall.web.response.product.ProductSkuView;
+import com.ddd.mall.web.response.product.ProductView;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -241,38 +244,4 @@ public class ProductController {
         return "DRAFT";
     }
 
-    /**
-     * 商品视图
-     */
-    public record ProductView(Long id,
-                              String name,
-                              String description,
-                              String mainImage,
-                              List<String> images,
-                              String status,
-                              List<ProductSkuView> skus,
-                              Long categoryId,
-                              String createdAt) {
-    }
-
-    /**
-     * 商品SKU视图
-     */
-    public record ProductSkuView(Long id,
-                                 String skuCode,
-                                 Map<String, String> attributes,
-                                 BigDecimal price,
-                                 BigDecimal originalPrice,
-                                 Integer stock) {
-    }
-
-    /**
-     * 分页响应
-     */
-    public record PageResponse<T>(List<T> content,
-                                  Long totalElements,
-                                  Integer totalPages,
-                                  Integer page,
-                                  Integer size) {
-    }
 }
