@@ -11,6 +11,14 @@ import java.util.List;
 @Getter
 @RequiredArgsConstructor
 public class OrderPageResult {
+
+    /**
+     * 订单列表
+     */
     private final List<com.ddd.mall.domain.order.Order> content;
+
+    /**
+     * 总记录数
+     */
     private final long totalElements;
 }

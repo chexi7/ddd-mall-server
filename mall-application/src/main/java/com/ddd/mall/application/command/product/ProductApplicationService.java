@@ -15,6 +15,9 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class ProductApplicationService {
 
+    /**
+     * 商品仓储
+     */
     private final ProductRepository productRepository;
 
     /**

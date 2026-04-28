@@ -19,6 +19,9 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class MenuQueryService {
 
+    /**
+     * 菜单仓储
+     */
     private final MenuRepository menuRepository;
 
     /**

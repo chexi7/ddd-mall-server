@@ -12,10 +12,29 @@ import lombok.Setter;
 @Setter
 public class OrderItem extends Entity {
 
+    /**
+     * 商品ID
+     */
     private Long productId;
+
+    /**
+     * SKU ID
+     */
     private Long skuId;
+
+    /**
+     * 商品名称
+     */
     private String productName;
+
+    /**
+     * 单价
+     */
     private Money unitPrice;
+
+    /**
+     * 数量
+     */
     private int quantity;
 
     protected OrderItem() {}

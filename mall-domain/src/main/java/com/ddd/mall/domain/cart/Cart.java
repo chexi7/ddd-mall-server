@@ -3,7 +3,10 @@ package com.ddd.mall.domain.cart;
 import com.ddd.mall.domain.shared.AggregateRoot;
 import com.ddd.mall.domain.shared.DomainException;
 import com.ddd.mall.domain.shared.Money;
+import com.ddd.mall.domain.shared.ReconstructionOnly;
+import lombok.AccessLevel;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.math.BigDecimal;
@@ -16,12 +19,20 @@ import java.util.Optional;
  * 购物车聚合根
  */
 @Getter
+@ReconstructionOnly
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Cart extends AggregateRoot {
 
-    @Setter private Long memberId;
-    private final List<CartItem> items = new ArrayList<>();
+    /**
+     * 会员ID
+     */
+    @Setter
+    private Long memberId;
 
-    protected Cart() {}
+    /**
+     * 购物车项列表
+     */
+    private final List<CartItem> items = new ArrayList<>();
 
     public Cart(Long memberId) {
         this.memberId = memberId;

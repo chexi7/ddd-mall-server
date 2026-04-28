@@ -13,9 +13,15 @@ import java.util.List;
 @Getter
 public abstract class AggregateRoot extends Entity {
 
+    /**
+     * 版本号
+     */
     @Setter
     private Long version;
 
+    /**
+     * 领域事件列表
+     */
     private final transient List<DomainEvent> domainEvents = new ArrayList<>();
 
     protected void registerEvent(DomainEvent event) {

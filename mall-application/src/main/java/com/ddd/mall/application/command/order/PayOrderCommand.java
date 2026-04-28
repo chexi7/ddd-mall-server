@@ -6,5 +6,9 @@ import lombok.RequiredArgsConstructor;
 @Getter
 @RequiredArgsConstructor
 public class PayOrderCommand {
+
+    /**
+     * 订单号
+     */
     private final String orderNo;
 }

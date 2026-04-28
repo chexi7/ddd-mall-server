@@ -20,6 +20,9 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class RoleQueryService {
 
+    /**
+     * 角色仓储
+     */
     private final RoleRepository roleRepository;
 
     /**

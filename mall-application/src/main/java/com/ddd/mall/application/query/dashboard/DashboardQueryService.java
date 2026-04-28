@@ -22,8 +22,19 @@ import java.time.LocalDate;
 @RequiredArgsConstructor
 public class DashboardQueryService {
 
+    /**
+     * 商品查询端口
+     */
     private final ProductQueryPort productQueryPort;
+
+    /**
+     * 订单查询端口
+     */
     private final OrderQueryPort orderQueryPort;
+
+    /**
+     * 会员查询端口
+     */
     private final MemberQueryPort memberQueryPort;
 
     /**

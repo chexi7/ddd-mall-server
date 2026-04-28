@@ -882,6 +882,55 @@ Order（聚合根）
 | **聚合间只通过 ID 引用** | Order 不持有 Product 对象，只持有 productId | `orderItem.productId` |
 | **聚合间通过事件通信** | 下单后库存预扣，用 OrderCreatedEvent | 不在 `OrderApplicationService.createOrder` 里直接调 `InventoryRepository` |
 | **尽量保持聚合小** | 聚合越大，并发冲突越多 | Order 不包含 Product 的完整信息 |
+| **属性必须有业务注释** | 每个字段用 `/** */` 注释说明业务含义 | `/** 订单号，系统生成的唯一标识 */` 而不是沉默的字段 |
+| **禁止手写 protected 无参构造函数** | 用 `@ReconstructionOnly` + `@NoArgsConstructor(access = PROTECTED)` 替代 | 见 6.2.1 和 6.2.2 |
+
+#### 6.2.1 聚合根属性必须有业务注释
+
+聚合根的每个字段都应有 `/** */` 注释，说明其**业务含义**而非技术含义。这对教学项目和团队协作至关重要——注释应回答"这个字段在业务上是什么"，而不是重复字段名：
+
+```java
+/** 订单号，系统生成的唯一标识 */
+private String orderNo;
+/** 下单会员ID，跨聚合引用 */
+private Long memberId;
+/** 订单总金额，由订单项自动计算 */
+private Money totalAmount;
+/** 订单状态，驱动业务流转的状态机 */
+private OrderStatus status;
+```
+
+**注释要点**：
+
+- 说明业务角色，如"跨聚合引用"标明引用关系而非整体持有
+- 说明值的来源，如"由订单项自动计算"标明非外部传入
+- 说明值的含义，如"已被订单预占但未扣减"而非只写"锁定数量"
+
+#### 6.2.2 用 `@ReconstructionOnly` + `@NoArgsConstructor` 替代手写 protected 构造函数
+
+聚合根的 protected 无参构造函数仅供仓储重建（从数据库加载时 JPA/Converter 反射创建对象）。过去我们手写 `protected Order() {}`，现在用注解替代：
+
+```java
+/**
+ * 订单聚合根
+ * 状态机：PENDING_PAYMENT → PAID → SHIPPED → COMPLETED | CANCELLED
+ */
+@Getter
+@ReconstructionOnly
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+public class Order extends AggregateRoot {
+    // ... 字段和业务方法
+}
+```
+
+**两个注解各自的作用**：
+
+| 注解 | 作用 | 来源 |
+|------|------|------|
+| `@NoArgsConstructor(access = AccessLevel.PROTECTED)` | **生成** protected 无参构造函数（Lombok 机械行为） | Lombok |
+| `@ReconstructionOnly` | **声明** 设计意图——"此构造函数仅供仓储重建，业务代码禁止使用" | 本项目自定义（`domain.shared`） |
+
+**为什么需要 `@ReconstructionOnly`**？Lombok 的 `@NoArgsConstructor` 只管生成代码，无法表达意图。手写 `protected Order() {}` 时开发者至少能看到一行代码，而 Lombok 生成后这行代码消失了，新人无法知道"为什么会有一个 protected 无参构造函数"。`@ReconstructionOnly` 用 `@Documented` + `@Retention(SOURCE)` 在源码层面声明意图，编译后消失——它不是运行时约束，而是**给人的提醒**。
 
 ### 6.3 仓储模式——命令侧端口
 
@@ -1375,6 +1424,7 @@ public class OrderRepositoryImpl implements OrderRepository {
 | `@Getter @Builder @NoArgsConstructor @AllArgsConstructor` | DTO（读模型出参）、PageResult | Builder 便于服务端组装；NoArgsConstructor 便于 Jackson 序列化 |
 | `@Getter @Setter @NoArgsConstructor @AllArgsConstructor` | PageQuery（分页入参基类） | 分页字段允许外部设置默认值（Controller 中 `query.setPageNum(page)`） |
 | `@RequiredArgsConstructor` | ApplicationService、DomainService、EventHandler | 构造器注入 |
+| `@ReconstructionOnly @NoArgsConstructor(access = PROTECTED)` | 聚合根、聚合内实体 | Lombok 生成 protected 无参构造函数供仓储重建；`@ReconstructionOnly` 声明设计意图——业务代码禁止使用 |
 | `@Slf4j` | 事件处理器 | 日志 |
 
 ### 12.2 禁止用法
@@ -1385,6 +1435,7 @@ public class OrderRepositoryImpl implements OrderRepository {
 | `@Data` | 聚合根、实体 | 等于 @Getter + @Setter + @ToString + @EqualsAndHashCode，setter 会破坏封装 |
 | `@Builder` | 聚合根 | 构造应通过有业务含义的构造函数或工厂方法 |
 | `@NoArgsConstructor(PUBLIC)` | 聚合根 | 允许创建无效状态的对象 |
+| `protected Xxx() {}`（手写） | 聚合根、实体 | 用 `@ReconstructionOnly @NoArgsConstructor(access = PROTECTED)` 替代，避免手写与意图脱节 |
 
 ### 12.3 聚合根的 Setter 策略
 
@@ -1392,7 +1443,14 @@ public class OrderRepositoryImpl implements OrderRepository {
 
 ```java
 @Getter                           // ✅ 所有字段可读
+@ReconstructionOnly               // ✅ 声明 protected 构造函数仅供仓储重建
+@NoArgsConstructor(access = AccessLevel.PROTECTED)  // ✅ Lombok 自动生成 protected 无参构造
 public class Order extends AggregateRoot {
+    /** 订单号，系统生成的唯一标识 */
+    @Setter private String orderNo;       // 仅供 Converter 重建用
+    /** 下单会员ID，跨聚合引用 */
+    @Setter private Long memberId;        // 仅供 Converter 重建用
+    /** 订单状态，驱动业务流转的状态机 */
     @Setter private OrderStatus status;   // 仅供 Converter 重建用
     // ...
 
@@ -1406,7 +1464,10 @@ public class Order extends AggregateRoot {
 }
 ```
 
-**团队约定：业务代码中禁止调用聚合根的 setter，setter 仅供 infrastructure 层 Converter 使用。**
+**团队约定**：
+- 业务代码中禁止调用聚合根的 setter，setter 仅供 infrastructure 层 Converter 使用
+- 禁止手写 `protected Xxx() {}`，用 `@ReconstructionOnly` + `@NoArgsConstructor(access = PROTECTED)` 替代
+- 聚合根每个字段必须有 `/** */` 注释说明业务含义
 
 > 参考：[Lombok 的正确姿势](https://docs.mryqr.com/how-to-use-lombok-in-ddd/)
 
@@ -1428,21 +1489,23 @@ public class Order extends AggregateRoot {
 
 ### Q4: 仓储接口应该有哪些方法？
 
-**只定义业务需要的方法**，不要提供通用的 `findAll()`、`findByXxx()`。仓储接口是领域语言的一部分：
+**只定义命令侧业务需要的方法**，查询侧走 QueryService + QueryPort，不放在仓储接口里：
 
 ```java
-// ✅ 好的仓储接口——方法名有业务含义
+// ✅ 好的仓储接口——只有命令侧操作：加载 + 保存
 public interface ProductRepository {
     Optional<Product> findById(Long id);
-    List<Product> findOnSaleProducts();    // 业务概念：在售商品
     void save(Product product);
 }
 
-// ❌ 不好的仓储接口——暴露了技术细节
+// ❌ 不好的仓储接口——混入查询方法 + 暴露技术细节
 public interface ProductRepository extends JpaRepository<Product, Long> {
-    // 暴露了所有 CRUD 方法
+    List<Product> findOnSaleProducts();    // 查询应在 QueryService 中
+    List<Product> findByCategory(String category);  // 查询应在 QueryService 中
 }
 ```
+
+查询需求由 `ProductQueryService` + `ProductQueryPort`（基础设施层的查询接口）承载，仓储接口只保留"取出聚合根"和"保存聚合根"两类方法。
 
 ### Q5: DO 转换是不是太啰嗦了？
 

@@ -9,14 +9,29 @@ package com.ddd.mall.domain.order;
  * PENDING_PAYMENT → CANCELLED
  */
 public enum OrderStatus {
-    /** 待支付 */
+
+    /**
+     * 待支付
+     */
     PENDING_PAYMENT,
-    /** 已支付 */
+
+    /**
+     * 已支付
+     */
     PAID,
-    /** 已发货 */
+
+    /**
+     * 已发货
+     */
     SHIPPED,
-    /** 已完成 */
+
+    /**
+     * 已完成
+     */
     COMPLETED,
-    /** 已取消 */
+
+    /**
+     * 已取消
+     */
     CANCELLED
 }

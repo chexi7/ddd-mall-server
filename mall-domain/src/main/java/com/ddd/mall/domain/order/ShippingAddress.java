@@ -11,11 +11,35 @@ import lombok.Getter;
 @AllArgsConstructor
 @EqualsAndHashCode
 public class ShippingAddress {
+
+    /**
+     * 收件人姓名
+     */
     private final String receiverName;
+
+    /**
+     * 收件人电话
+     */
     private final String receiverPhone;
+
+    /**
+     * 省份
+     */
     private final String province;
+
+    /**
+     * 城市
+     */
     private final String city;
+
+    /**
+     * 区县
+     */
     private final String district;
+
+    /**
+     * 详细地址
+     */
     private final String detail;
 
     public String fullAddress() { return province + city + district + detail; }

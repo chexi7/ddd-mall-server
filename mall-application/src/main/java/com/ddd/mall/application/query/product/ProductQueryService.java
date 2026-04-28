@@ -33,7 +33,14 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class ProductQueryService {
 
+    /**
+     * 商品仓储
+     */
     private final ProductRepository productRepository;
+
+    /**
+     * 商品查询端口
+     */
     private final ProductQueryPort productQueryPort;
 
     /**

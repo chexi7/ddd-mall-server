@@ -13,6 +13,9 @@ import java.math.RoundingMode;
 @EqualsAndHashCode
 public class Money {
 
+    /**
+     * 金额数值
+     */
     private final BigDecimal amount;
 
     private Money(BigDecimal amount) {

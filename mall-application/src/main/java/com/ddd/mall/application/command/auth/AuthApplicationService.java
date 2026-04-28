@@ -23,9 +23,24 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class AuthApplicationService {
 
+    /**
+     * 管理员仓储
+     */
     private final AdminRepository adminRepository;
+
+    /**
+     * 角色仓储
+     */
     private final RoleRepository roleRepository;
+
+    /**
+     * 会员仓储
+     */
     private final MemberRepository memberRepository;
+
+    /**
+     * Token服务
+     */
     private final TokenService tokenService;
 
     /**

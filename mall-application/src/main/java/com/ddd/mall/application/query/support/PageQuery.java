@@ -17,6 +17,14 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 public class PageQuery {
+
+    /**
+     * 页码
+     */
     private int pageNum = 1;
+
+    /**
+     * 每页条数
+     */
     private int pageSize = 10;
 }

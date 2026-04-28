@@ -14,6 +14,9 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class MenuApplicationService {
 
+    /**
+     * 菜单仓储
+     */
     private final MenuRepository menuRepository;
 
     /**

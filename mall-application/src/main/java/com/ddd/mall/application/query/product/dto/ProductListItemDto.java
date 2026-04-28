@@ -16,12 +16,44 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ProductListItemDto {
+
+    /**
+     * 商品ID
+     */
     private Long id;
+
+    /**
+     * 商品名称
+     */
     private String name;
+
+    /**
+     * 商品描述
+     */
     private String description;
+
+    /**
+     * 商品价格
+     */
     private BigDecimal price;
+
+    /**
+     * 商品状态
+     */
     private String status;
+
+    /**
+     * 分类ID
+     */
     private Long categoryId;
+
+    /**
+     * SKU列表
+     */
     private List<ProductSkuDto> skus;
+
+    /**
+     * 创建时间
+     */
     private String createdAt;
 }

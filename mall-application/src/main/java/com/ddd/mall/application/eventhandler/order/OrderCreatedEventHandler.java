@@ -19,7 +19,14 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class OrderCreatedEventHandler {
 
+    /**
+     * 库存仓储
+     */
     private final InventoryRepository inventoryRepository;
+
+    /**
+     * 购物车仓储
+     */
     private final CartRepository cartRepository;
 
     @EventListener

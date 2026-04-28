@@ -23,6 +23,9 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class OrderApplicationService {
 
+    /**
+     * 订单仓储
+     */
     private final OrderRepository orderRepository;
 
     /**

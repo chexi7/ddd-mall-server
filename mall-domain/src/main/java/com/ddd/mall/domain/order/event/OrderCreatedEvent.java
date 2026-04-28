@@ -11,10 +11,30 @@ import java.util.stream.Collectors;
 
 @Getter
 public class OrderCreatedEvent implements DomainEvent {
+
+    /**
+     * 订单ID
+     */
     private final Long orderId;
+
+    /**
+     * 订单号
+     */
     private final String orderNo;
+
+    /**
+     * 会员ID
+     */
     private final Long memberId;
+
+    /**
+     * 订单项信息列表
+     */
     private final List<OrderItemInfo> items;
+
+    /**
+     * 事件发生时间
+     */
     private final LocalDateTime occurredOn;
 
     public OrderCreatedEvent(Order order) {
@@ -33,8 +53,20 @@ public class OrderCreatedEvent implements DomainEvent {
     @Getter
     @RequiredArgsConstructor
     public static class OrderItemInfo {
+
+        /**
+         * 商品ID
+         */
         private final Long productId;
+
+        /**
+         * SKU ID
+         */
         private final Long skuId;
+
+        /**
+         * 数量
+         */
         private final int quantity;
     }
 }

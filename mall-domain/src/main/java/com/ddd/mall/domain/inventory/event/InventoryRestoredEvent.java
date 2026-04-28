@@ -7,8 +7,20 @@ import java.time.LocalDateTime;
 
 @Getter
 public class InventoryRestoredEvent implements DomainEvent {
+
+    /**
+     * 商品ID
+     */
     private final Long productId;
+
+    /**
+     * 恢复数量
+     */
     private final int quantity;
+
+    /**
+     * 事件发生时间
+     */
     private final LocalDateTime occurredOn;
 
     public InventoryRestoredEvent(Long productId, int quantity) {

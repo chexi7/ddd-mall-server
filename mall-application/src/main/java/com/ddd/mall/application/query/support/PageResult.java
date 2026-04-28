@@ -18,9 +18,29 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class PageResult<T> {
+
+    /**
+     * 数据列表
+     */
     private List<T> data;
+
+    /**
+     * 总记录数
+     */
     private long totalCount;
+
+    /**
+     * 总页数
+     */
     private int totalPages;
+
+    /**
+     * 页码
+     */
     private int pageNum;
+
+    /**
+     * 每页条数
+     */
     private int pageSize;
 }

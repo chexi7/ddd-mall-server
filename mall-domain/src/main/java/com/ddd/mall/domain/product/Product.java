@@ -5,7 +5,10 @@ import com.ddd.mall.domain.product.event.ProductPriceChangedEvent;
 import com.ddd.mall.domain.shared.AggregateRoot;
 import com.ddd.mall.domain.shared.DomainException;
 import com.ddd.mall.domain.shared.Money;
+import com.ddd.mall.domain.shared.ReconstructionOnly;
+import lombok.AccessLevel;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
@@ -17,18 +20,56 @@ import java.util.List;
  * 商品聚合根
  */
 @Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@ReconstructionOnly
 public class Product extends AggregateRoot {
 
-    @Setter private String name;
-    @Setter private String description;
-    @Setter private Money price;
-    @Setter private ProductStatus status;
-    @Setter private String category;
-    private final List<ProductSku> skus = new ArrayList<>();
-    @Setter private LocalDateTime createdAt;
-    @Setter private LocalDateTime updatedAt;
+    /**
+     * 商品名称
+     */
+    @Setter
+    private String name;
 
-    protected Product() {}
+    /**
+     * 商品描述
+     */
+    @Setter
+    private String description;
+
+    /**
+     * 商品价格
+     */
+    @Setter
+    private Money price;
+
+    /**
+     * 商品状态
+     */
+    @Setter
+    private ProductStatus status;
+
+    /**
+     * 商品分类名称
+     */
+    @Setter
+    private String category;
+
+    /**
+     * SKU列表
+     */
+    private final List<ProductSku> skus = new ArrayList<>();
+
+    /**
+     * 创建时间
+     */
+    @Setter
+    private LocalDateTime createdAt;
+
+    /**
+     * 最后更新时间
+     */
+    @Setter
+    private LocalDateTime updatedAt;
 
     public Product(String name, String description, Money price, String category) {
         if (name == null || name.isBlank()) throw new DomainException("商品名称不能为空");

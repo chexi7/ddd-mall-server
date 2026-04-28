@@ -14,6 +14,9 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class RoleApplicationService {
 
+    /**
+     * 角色仓储
+     */
     private final RoleRepository roleRepository;
 
     /**

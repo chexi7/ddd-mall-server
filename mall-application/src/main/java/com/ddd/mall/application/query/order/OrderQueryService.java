@@ -29,7 +29,14 @@ import java.util.stream.Stream;
 @RequiredArgsConstructor
 public class OrderQueryService {
 
+    /**
+     * 订单仓储
+     */
     private final OrderRepository orderRepository;
+
+    /**
+     * 订单查询端口
+     */
     private final OrderQueryPort orderQueryPort;
 
     /**

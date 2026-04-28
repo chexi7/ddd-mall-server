@@ -4,7 +4,10 @@ import com.ddd.mall.domain.inventory.event.InventoryDeductedEvent;
 import com.ddd.mall.domain.inventory.event.InventoryRestoredEvent;
 import com.ddd.mall.domain.shared.AggregateRoot;
 import com.ddd.mall.domain.shared.DomainException;
+import com.ddd.mall.domain.shared.ReconstructionOnly;
+import lombok.AccessLevel;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 /**
@@ -12,14 +15,29 @@ import lombok.Setter;
  */
 @Getter
 @Setter
+@ReconstructionOnly
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Inventory extends AggregateRoot {
 
+    /**
+     * 商品ID
+     */
     private Long productId;
-    private int totalStock;
-    private int availableStock;
-    private int lockedStock;
 
-    protected Inventory() {}
+    /**
+     * 总库存数量
+     */
+    private int totalStock;
+
+    /**
+     * 可用库存数量
+     */
+    private int availableStock;
+
+    /**
+     * 已锁定库存数量
+     */
+    private int lockedStock;
 
     public Inventory(Long productId, int totalStock) {
         if (totalStock < 0) throw new DomainException("库存不能为负数");

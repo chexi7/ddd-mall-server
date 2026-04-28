@@ -16,6 +16,9 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class OrderPaidEventHandler {
 
+    /**
+     * 库存仓储
+     */
     private final InventoryRepository inventoryRepository;
 
     @EventListener

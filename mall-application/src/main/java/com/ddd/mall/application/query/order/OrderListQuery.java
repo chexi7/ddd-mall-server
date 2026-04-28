@@ -13,6 +13,14 @@ import lombok.RequiredArgsConstructor;
 @Getter
 @RequiredArgsConstructor
 public class OrderListQuery extends PageQuery {
+
+    /**
+     * 订单状态
+     */
     private final String status;
+
+    /**
+     * 搜索关键字
+     */
     private final String keyword;
 }

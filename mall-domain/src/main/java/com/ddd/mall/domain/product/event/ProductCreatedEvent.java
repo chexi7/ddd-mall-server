@@ -8,8 +8,20 @@ import java.time.LocalDateTime;
 
 @Getter
 public class ProductCreatedEvent implements DomainEvent {
+
+    /**
+     * 商品ID
+     */
     private final Long productId;
+
+    /**
+     * 商品名称
+     */
     private final String productName;
+
+    /**
+     * 事件发生时间
+     */
     private final LocalDateTime occurredOn;
 
     public ProductCreatedEvent(Product product) {

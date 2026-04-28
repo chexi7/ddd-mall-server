@@ -10,5 +10,9 @@ import lombok.RequiredArgsConstructor;
 @Getter
 @RequiredArgsConstructor
 public class ProductSearchQuery extends PageQuery {
+
+    /**
+     * 搜索关键字
+     */
     private final String keyword;
 }

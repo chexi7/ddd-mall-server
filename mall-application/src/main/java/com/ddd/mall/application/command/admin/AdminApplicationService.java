@@ -14,6 +14,9 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class AdminApplicationService {
 
+    /**
+     * 管理员仓储
+     */
     private final AdminRepository adminRepository;
 
     /**

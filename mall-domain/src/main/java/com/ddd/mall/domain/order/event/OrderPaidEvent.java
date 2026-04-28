@@ -10,10 +10,30 @@ import java.util.stream.Collectors;
 
 @Getter
 public class OrderPaidEvent implements DomainEvent {
+
+    /**
+     * 订单ID
+     */
     private final Long orderId;
+
+    /**
+     * 订单号
+     */
     private final String orderNo;
+
+    /**
+     * 会员ID
+     */
     private final Long memberId;
+
+    /**
+     * 订单项信息列表
+     */
     private final List<OrderCreatedEvent.OrderItemInfo> items;
+
+    /**
+     * 事件发生时间
+     */
     private final LocalDateTime occurredOn;
 
     public OrderPaidEvent(Order order) {

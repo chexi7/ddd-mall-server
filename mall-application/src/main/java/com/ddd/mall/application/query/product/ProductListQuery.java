@@ -10,6 +10,14 @@ import lombok.RequiredArgsConstructor;
 @Getter
 @RequiredArgsConstructor
 public class ProductListQuery extends PageQuery {
+
+    /**
+     * 分类ID
+     */
     private final Long categoryId;
+
+    /**
+     * 商品状态
+     */
     private final String status;
 }

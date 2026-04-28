@@ -13,9 +13,29 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class DashboardStatsDto {
+
+    /**
+     * 商品总数
+     */
     private long totalProducts;
+
+    /**
+     * 订单总数
+     */
     private long totalOrders;
+
+    /**
+     * 会员总数
+     */
     private long totalMembers;
+
+    /**
+     * 今日订单数
+     */
     private long todayOrders;
+
+    /**
+     * 今日营收
+     */
     private double todayRevenue;
 }

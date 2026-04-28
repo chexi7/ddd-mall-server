@@ -6,7 +6,10 @@ import com.ddd.mall.domain.order.event.OrderPaidEvent;
 import com.ddd.mall.domain.shared.AggregateRoot;
 import com.ddd.mall.domain.shared.DomainException;
 import com.ddd.mall.domain.shared.Money;
+import com.ddd.mall.domain.shared.ReconstructionOnly;
+import lombok.AccessLevel;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
@@ -20,32 +23,74 @@ import java.util.List;
  * 状态机：PENDING_PAYMENT → PAID → SHIPPED → COMPLETED | CANCELLED
  */
 @Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@ReconstructionOnly
 public class Order extends AggregateRoot {
 
+    /**
+     * 订单号
+     */
     @Setter
     private String orderNo;
+
+    /**
+     * 会员ID
+     */
     @Setter
     private Long memberId;
+
+    /**
+     * 订单项列表
+     */
     private final List<OrderItem> items = new ArrayList<>();
+
+    /**
+     * 订单总金额
+     */
     @Setter
     private Money totalAmount;
+
+    /**
+     * 订单状态
+     */
     @Setter
     private OrderStatus status;
+
+    /**
+     * 收货地址
+     */
     @Setter
     private ShippingAddress shippingAddress;
+
+    /**
+     * 创建时间
+     */
     @Setter
     private LocalDateTime createdAt;
+
+    /**
+     * 支付时间
+     */
     @Setter
     private LocalDateTime paidAt;
+
+    /**
+     * 发货时间
+     */
     @Setter
     private LocalDateTime shippedAt;
+
+    /**
+     * 完成时间
+     */
     @Setter
     private LocalDateTime completedAt;
+
+    /**
+     * 取消时间
+     */
     @Setter
     private LocalDateTime cancelledAt;
-
-    protected Order() {
-    }
 
     public Order(String orderNo, Long memberId, List<OrderItem> items, ShippingAddress shippingAddress) {
         if (items == null || items.isEmpty()) throw new DomainException("订单至少包含一个商品");

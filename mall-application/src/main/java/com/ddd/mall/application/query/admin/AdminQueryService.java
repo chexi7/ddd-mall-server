@@ -22,7 +22,14 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class AdminQueryService {
 
+    /**
+     * 管理员仓储
+     */
     private final AdminRepository adminRepository;
+
+    /**
+     * 角色仓储
+     */
     private final RoleRepository roleRepository;
 
     /**

@@ -3,7 +3,10 @@ package com.ddd.mall.domain.admin;
 import com.ddd.mall.domain.shared.AggregateRoot;
 import com.ddd.mall.domain.shared.CommonStatus;
 import com.ddd.mall.domain.shared.DomainException;
+import com.ddd.mall.domain.shared.ReconstructionOnly;
+import lombok.AccessLevel;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
@@ -15,18 +18,56 @@ import java.util.List;
  * 后台管理员聚合根
  */
 @Getter
+@ReconstructionOnly
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Admin extends AggregateRoot {
 
-    @Setter private String username;
-    @Setter private String password;
-    @Setter private String realName;
-    @Setter private String phone;
-    @Setter private String email;
-    @Setter private CommonStatus status;
-    private final List<Long> roleIds = new ArrayList<>();
-    @Setter private LocalDateTime createdAt;
+    /**
+     * 管理员登录名
+     */
+    @Setter
+    private String username;
 
-    protected Admin() {}
+    /**
+     * 密码
+     */
+    @Setter
+    private String password;
+
+    /**
+     * 真实姓名
+     */
+    @Setter
+    private String realName;
+
+    /**
+     * 手机号
+     */
+    @Setter
+    private String phone;
+
+    /**
+     * 邮箱
+     */
+    @Setter
+    private String email;
+
+    /**
+     * 管理员状态
+     */
+    @Setter
+    private CommonStatus status;
+
+    /**
+     * 已分配的角色ID列表
+     */
+    private final List<Long> roleIds = new ArrayList<>();
+
+    /**
+     * 创建时间
+     */
+    @Setter
+    private LocalDateTime createdAt;
 
     public Admin(String username, String password, String realName) {
         if (username == null || username.isBlank()) throw new DomainException("用户名不能为空");
@@ -78,7 +119,9 @@ public class Admin extends AggregateRoot {
         return Collections.unmodifiableList(roleIds);
     }
 
-    /** 仓储重建用 */
+    /**
+     * 仓储重建用
+     */
     public void addRoleIdInternal(Long roleId) {
         this.roleIds.add(roleId);
     }

@@ -2,7 +2,10 @@ package com.ddd.mall.domain.member;
 
 import com.ddd.mall.domain.shared.AggregateRoot;
 import com.ddd.mall.domain.shared.DomainException;
+import com.ddd.mall.domain.shared.ReconstructionOnly;
+import lombok.AccessLevel;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
@@ -12,16 +15,39 @@ import java.time.LocalDateTime;
  */
 @Getter
 @Setter
+@ReconstructionOnly
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Member extends AggregateRoot {
 
+    /**
+     * 会员登录名
+     */
     private String username;
-    private String password;
-    private String nickname;
-    private String phone;
-    private Address address;
-    private LocalDateTime createdAt;
 
-    protected Member() {}
+    /**
+     * 密码
+     */
+    private String password;
+
+    /**
+     * 昵称
+     */
+    private String nickname;
+
+    /**
+     * 手机号
+     */
+    private String phone;
+
+    /**
+     * 收货地址
+     */
+    private Address address;
+
+    /**
+     * 创建时间
+     */
+    private LocalDateTime createdAt;
 
     public Member(String username, String password, String nickname) {
         if (username == null || username.isBlank()) throw new DomainException("用户名不能为空");

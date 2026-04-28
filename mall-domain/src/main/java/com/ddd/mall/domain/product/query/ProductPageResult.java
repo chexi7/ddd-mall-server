@@ -11,6 +11,14 @@ import java.util.List;
 @Getter
 @RequiredArgsConstructor
 public class ProductPageResult {
+
+    /**
+     * 商品列表
+     */
     private final List<com.ddd.mall.domain.product.Product> content;
+
+    /**
+     * 总记录数
+     */
     private final long totalElements;
 }

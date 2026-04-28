@@ -2,7 +2,10 @@ package com.ddd.mall.domain.product;
 
 import com.ddd.mall.domain.shared.Entity;
 import com.ddd.mall.domain.shared.Money;
+import com.ddd.mall.domain.shared.ReconstructionOnly;
+import lombok.AccessLevel;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 /**
@@ -10,13 +13,24 @@ import lombok.Setter;
  */
 @Getter
 @Setter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@ReconstructionOnly
 public class ProductSku extends Entity {
 
+    /**
+     * SKU名称
+     */
     private String name;
-    private Money price;
-    private String attributes;
 
-    protected ProductSku() {}
+    /**
+     * SKU价格
+     */
+    private Money price;
+
+    /**
+     * SKU属性
+     */
+    private String attributes;
 
     ProductSku(String name, Money price, String attributes) {
         this.name = name;

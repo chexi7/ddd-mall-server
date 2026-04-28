@@ -6,5 +6,9 @@ import lombok.RequiredArgsConstructor;
 @Getter
 @RequiredArgsConstructor
 public class PublishProductCommand {
+
+    /**
+     * 商品ID
+     */
     private final Long productId;
 }

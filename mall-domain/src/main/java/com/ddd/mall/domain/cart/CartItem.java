@@ -13,10 +13,29 @@ import lombok.Setter;
 @Setter
 public class CartItem extends Entity {
 
+    /**
+     * 商品ID
+     */
     private Long productId;
+
+    /**
+     * SKU ID
+     */
     private Long skuId;
+
+    /**
+     * 商品名称
+     */
     private String productName;
+
+    /**
+     * 数量
+     */
     private int quantity;
+
+    /**
+     * 单价
+     */
     private Money unitPrice;
 
     protected CartItem() {}

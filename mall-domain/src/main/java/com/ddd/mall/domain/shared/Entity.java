@@ -13,6 +13,9 @@ import java.util.Objects;
 @Setter
 public abstract class Entity {
 
+    /**
+     * 实体唯一标识
+     */
     private Long id;
 
     @Override

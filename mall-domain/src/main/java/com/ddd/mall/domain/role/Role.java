@@ -3,7 +3,10 @@ package com.ddd.mall.domain.role;
 import com.ddd.mall.domain.shared.AggregateRoot;
 import com.ddd.mall.domain.shared.CommonStatus;
 import com.ddd.mall.domain.shared.DomainException;
+import com.ddd.mall.domain.shared.ReconstructionOnly;
+import lombok.AccessLevel;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
@@ -15,16 +18,44 @@ import java.util.List;
  * 角色聚合根
  */
 @Getter
+@ReconstructionOnly
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Role extends AggregateRoot {
 
-    @Setter private String name;
-    @Setter private String code;
-    @Setter private String description;
-    @Setter private CommonStatus status;
-    private final List<String> permissionCodes = new ArrayList<>();
-    @Setter private LocalDateTime createdAt;
+    /**
+     * 角色名称
+     */
+    @Setter
+    private String name;
 
-    protected Role() {}
+    /**
+     * 角色编码
+     */
+    @Setter
+    private String code;
+
+    /**
+     * 角色描述
+     */
+    @Setter
+    private String description;
+
+    /**
+     * 角色状态
+     */
+    @Setter
+    private CommonStatus status;
+
+    /**
+     * 已分配的权限编码列表
+     */
+    private final List<String> permissionCodes = new ArrayList<>();
+
+    /**
+     * 创建时间
+     */
+    @Setter
+    private LocalDateTime createdAt;
 
     public Role(String name, String code, String description) {
         if (name == null || name.isBlank()) throw new DomainException("角色名称不能为空");
