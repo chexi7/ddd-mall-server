@@ -249,7 +249,7 @@ mall/
 
 - **一个聚合一个 `*ApplicationService`，方法名即业务用例**（mryqr 推荐）。例：`OrderApplicationService` 暴露 `createOrder` / `payOrder` / `cancelOrder`，由 `MenuApplicationService.createMenu(cmd)` 直接读出业务意图。Controller 不再需要为"创建/支付/取消"各注入一个 `Create*ApplicationService`。
 - 命令入参使用 `*Command`（无业务含义的纯数据载体），有业务返回的用例使用 `*Result` 作为出参，与对应的 `*ApplicationService` 同包同层放置。
-- 查询同样按聚合归并，单聚合一个 `*QueryService`，方法名即查询用例（如 `MenuQueryService.menuTree()`、`OrderQueryService.orderList(...)`、`OrderQueryService.orderDetail(...)`）；查询读模型继续使用 `*Dto`，集中在 `dto/` 子包。
+- 查询同样按聚合归并，单聚合一个 `*QueryService`，方法名即查询用例（如 `MenuQueryService.menuTree()`、`OrderQueryService.orderList(...)`、`OrderQueryService.orderDetail(...)`）；查询入参少时直接传原始参数，多字段时升级为 `*Query` 类（详见 4.4.4），与服务同包平铺；查询读模型继续使用 `*Dto`，集中在 `dto/` 子包。
 - Controller 等 Web 层协议对象使用 `*Request` / `ApiResponse` / `PageResponse`。
 - `Handler` 后缀**仅保留给领域事件处理器**（`*EventHandler`）、框架拦截器等事件 / 技术适配场景，不再用于命令用例类。
 
@@ -283,7 +283,7 @@ mall/
 |---|---|---|
 | Web Controller | `*Request`（HTTP 请求体 DTO） | `ApiResponse<T>` / `PageResponse<T>` |
 | 应用层命令侧 | `*Command` | `*Result` / 原始类型 / `void` |
-| 应用层查询侧 | 方法参数（一般不建 Query 类） | `*Dto`、`PageResult<*Dto>` |
+| 应用层查询侧 | 原始参数 / `*Query`（多字段时，详见 4.4.4） | `*Dto`、`PageResult<*Dto>` |
 | 领域层 | 聚合根方法的形参 | 聚合根 / 值对象 |
 | 领域事件 | — | `*Event`（过去式名词） |
 
@@ -307,7 +307,62 @@ mall/
 
 **经验法则**：字段数 ≥ 2，或者将来有可能扩展字段就建 `*Result`；只返回一个 ID/订单号就直接返回基础类型，避免空壳类。
 
-> 参考：[项目结构](https://docs.mryqr.com/ddd-project-structure/)
+#### 4.4.4 查询侧入参用 `*Query`，**不要**用领域 Entity / `*Request` / `*Command`
+
+命令侧用 `*Command`，对称地查询侧用 `*Query`，与 CQRS 的术语谱系保持一致。**绝不能**直接拿领域 Entity / AggregateRoot 当查询入参，几条红线如下：
+
+| 反对做法 | 原因 |
+|---|---|
+| 用 `domain.Admin` 等聚合根作 query 入参 | 破坏 CQRS（查询条件 ≠ 领域实体）+ 破坏依赖方向（web 会被迫引用 domain）+ 干扰聚合不变量（构造校验对查询无意义）+ 语义歧义（不知道哪些字段是过滤条件） |
+| 复用 web 层的 `*Request` | `*Request` 绑定 HTTP 协议语义，整洁架构里 application 不应依赖 web |
+| 复用命令侧的 `*Command` | CQRS 的核心就是命令 / 查询术语严格分离 |
+| 把入参塞进 `dto/` 子包 | `dto/` 已专门承载读模型**出参**，再混入入参职责会糊掉目录语义 |
+
+**推荐做法**：与 `*Command` 完全对称。`*Query` 类与对应 `*QueryService` **同包平铺**：
+
+```
+application/query/
+├── admin/
+│   ├── AdminQueryService.java          ← 服务
+│   ├── AdminListQuery.java             ← 多字段入参（按需新增）
+│   ├── RoleQueryService.java
+│   ├── MenuQueryService.java
+│   └── dto/
+│       ├── AdminListItemDto.java       ← 出参（读模型）
+│       └── ...
+└── order/
+    ├── OrderQueryService.java
+    ├── OrderListQuery.java             ← 字段变多时新增
+    └── dto/
+        ├── OrderListItemDto.java
+        └── OrderDetailDto.java
+```
+
+`*Query` 类的内容形态可比 `*Command` 宽松一些（查询入参没有"业务事实"语义，可变性约束可以放宽），用 `@Getter @Setter` 通常即可：
+
+```java
+@Getter
+@Setter
+public class AdminListQuery {
+    private int page = 1;
+    private int size = 10;
+    private String keyword;
+    private Boolean enabled;
+    private LocalDate createdFrom;
+    private LocalDate createdTo;
+}
+```
+
+**何时升级到 `*Query`，何时保留原始参数**（与 4.4.3 决策表对称）：
+
+| 入参情况 | 做法 | 本项目对应 |
+|---|---|---|
+| 0 ~ 1 个原始类型参数 | 直接传 | `MenuQueryService.menuTree()`、`OrderQueryService.orderDetail(String orderNo)` |
+| 2 ~ 3 个原始类型参数 | 直接传 | `RoleQueryService.roleList(int page, int size)`、`AdminQueryService.adminList(int page, int size, String keyword)` |
+| ≥ 4 个参数 / 内聚业务含义 / 需要 Bean Validation / 字段还会扩展 | 建 `*Query` 类 | `OrderQueryService.orderList(int, int, String, String)` 已 4 个参数，再加任何筛选字段就该升级为 `OrderListQuery` |
+| 多组互斥搜索条件（搜索 / 报表场景） | 建 `*Query` 类，可配 `@AssertTrue` 等校验 | 如未来 `ProductSearchQuery` |
+
+> 参考：[项目结构](https://docs.mryqr.com/ddd-project-structure/) | [CQRS](https://docs.mryqr.com/ddd-cqrs/)
 
 ---
 
