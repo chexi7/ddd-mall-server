@@ -6,7 +6,6 @@ import com.ddd.mall.domain.shared.ReconstructionOnly;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 import java.time.LocalDateTime;
 
@@ -14,7 +13,6 @@ import java.time.LocalDateTime;
  * 会员聚合根
  */
 @Getter
-@Setter
 @ReconstructionOnly
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Member extends AggregateRoot {

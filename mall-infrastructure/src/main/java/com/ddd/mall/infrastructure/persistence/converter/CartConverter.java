@@ -5,20 +5,25 @@ import com.ddd.mall.domain.cart.CartItem;
 import com.ddd.mall.domain.shared.Money;
 import com.ddd.mall.infrastructure.persistence.dataobject.CartDO;
 import com.ddd.mall.infrastructure.persistence.dataobject.CartItemDO;
+import com.ddd.mall.infrastructure.persistence.reflect.DomainObjectReconstructor;
 
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 public class CartConverter {
 
     public static Cart toDomain(CartDO d) {
-        Cart cart = new Cart(d.getMemberId());
-        cart.setId(d.getId());
-        cart.setVersion(d.getVersion());
-        cart.clearDomainEvents();
+        Map<String, Object> fields = new LinkedHashMap<>();
+        fields.put("id", d.getId());
+        fields.put("version", d.getVersion());
+        fields.put("memberId", d.getMemberId());
+
+        Cart cart = DomainObjectReconstructor.reconstruct(Cart.class, fields);
         for (CartItemDO itemDO : d.getItems()) {
-            CartItem item = toItemDomain(itemDO);
-            cart.addItemInternal(item);
+            cart.addItemInternal(toItemDomain(itemDO));
         }
+        cart.clearDomainEvents();
         return cart;
     }
 
@@ -32,14 +37,14 @@ public class CartConverter {
     }
 
     private static CartItem toItemDomain(CartItemDO d) {
-        CartItem item = new CartItem() {};
-        item.setId(d.getId());
-        item.setProductId(d.getProductId());
-        item.setSkuId(d.getSkuId());
-        item.setProductName(d.getProductName());
-        item.setQuantity(d.getQuantity());
-        item.setUnitPrice(Money.of(d.getUnitPrice()));
-        return item;
+        Map<String, Object> fields = new LinkedHashMap<>();
+        fields.put("id", d.getId());
+        fields.put("productId", d.getProductId());
+        fields.put("skuId", d.getSkuId());
+        fields.put("productName", d.getProductName());
+        fields.put("quantity", d.getQuantity());
+        fields.put("unitPrice", Money.of(d.getUnitPrice()));
+        return DomainObjectReconstructor.reconstruct(CartItem.class, fields);
     }
 
     private static CartItemDO toItemDO(CartItem item) {

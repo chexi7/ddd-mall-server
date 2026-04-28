@@ -10,7 +10,6 @@ import com.ddd.mall.domain.shared.ReconstructionOnly;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -30,13 +29,11 @@ public class Order extends AggregateRoot {
     /**
      * 订单号
      */
-    @Setter
     private String orderNo;
 
     /**
-     * 会员ID
+     * 下单会员ID
      */
-    @Setter
     private Long memberId;
 
     /**
@@ -47,49 +44,41 @@ public class Order extends AggregateRoot {
     /**
      * 订单总金额
      */
-    @Setter
     private Money totalAmount;
 
     /**
      * 订单状态
      */
-    @Setter
     private OrderStatus status;
 
     /**
      * 收货地址
      */
-    @Setter
     private ShippingAddress shippingAddress;
 
     /**
      * 创建时间
      */
-    @Setter
     private LocalDateTime createdAt;
 
     /**
      * 支付时间
      */
-    @Setter
     private LocalDateTime paidAt;
 
     /**
      * 发货时间
      */
-    @Setter
     private LocalDateTime shippedAt;
 
     /**
      * 完成时间
      */
-    @Setter
     private LocalDateTime completedAt;
 
     /**
      * 取消时间
      */
-    @Setter
     private LocalDateTime cancelledAt;
 
     public Order(String orderNo, Long memberId, List<OrderItem> items, ShippingAddress shippingAddress) {

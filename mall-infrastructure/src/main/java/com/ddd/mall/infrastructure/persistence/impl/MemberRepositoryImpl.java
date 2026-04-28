@@ -5,6 +5,7 @@ import com.ddd.mall.domain.member.MemberRepository;
 import com.ddd.mall.infrastructure.persistence.MemberJpaRepository;
 import com.ddd.mall.infrastructure.persistence.converter.MemberConverter;
 import com.ddd.mall.infrastructure.persistence.dataobject.MemberDO;
+import com.ddd.mall.infrastructure.persistence.reflect.DomainObjectReconstructor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
@@ -34,7 +35,6 @@ public class MemberRepositoryImpl implements MemberRepository {
     @Override
     public void save(Member member) {
         MemberDO saved = jpaRepository.save(MemberConverter.toDO(member));
-        member.setId(saved.getId());
-        member.setVersion(saved.getVersion());
+        DomainObjectReconstructor.setIdAndVersion(member, saved.getId(), saved.getVersion());
     }
 }

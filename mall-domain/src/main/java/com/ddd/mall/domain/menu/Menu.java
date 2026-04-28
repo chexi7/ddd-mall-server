@@ -6,7 +6,6 @@ import com.ddd.mall.domain.shared.ReconstructionOnly;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 import java.time.LocalDateTime;
 
@@ -21,61 +20,51 @@ public class Menu extends AggregateRoot {
     /**
      * 菜单名称
      */
-    @Setter
     private String name;
 
     /**
      * 父菜单ID
      */
-    @Setter
     private Long parentId;
 
     /**
      * 路由路径
      */
-    @Setter
     private String path;
 
     /**
      * 前端组件路径
      */
-    @Setter
     private String component;
 
     /**
      * 菜单图标
      */
-    @Setter
     private String icon;
 
     /**
-     * 关联权限编码
+     * 权限编码
      */
-    @Setter
     private String permissionCode;
 
     /**
      * 菜单类型
      */
-    @Setter
     private MenuType type;
 
     /**
      * 排序号
      */
-    @Setter
     private Integer sort;
 
     /**
      * 是否可见
      */
-    @Setter
     private Boolean visible;
 
     /**
      * 创建时间
      */
-    @Setter
     private LocalDateTime createdAt;
 
     public Menu(String name, Long parentId, String path, String component,

@@ -32,8 +32,7 @@ public class AdminApplicationService {
         }
 
         Admin admin = new Admin(command.getUsername(), command.getPassword(), command.getRealName());
-        admin.setPhone(command.getPhone());
-        admin.setEmail(command.getEmail());
+        admin.updateContactInfo(command.getPhone(), command.getEmail());
 
         adminRepository.save(admin);
         return admin.getId();

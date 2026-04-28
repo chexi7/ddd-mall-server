@@ -7,7 +7,6 @@ import com.ddd.mall.domain.shared.ReconstructionOnly;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -25,25 +24,21 @@ public class Role extends AggregateRoot {
     /**
      * 角色名称
      */
-    @Setter
     private String name;
 
     /**
      * 角色编码
      */
-    @Setter
     private String code;
 
     /**
      * 角色描述
      */
-    @Setter
     private String description;
 
     /**
      * 角色状态
      */
-    @Setter
     private CommonStatus status;
 
     /**
@@ -54,7 +49,6 @@ public class Role extends AggregateRoot {
     /**
      * 创建时间
      */
-    @Setter
     private LocalDateTime createdAt;
 
     public Role(String name, String code, String description) {

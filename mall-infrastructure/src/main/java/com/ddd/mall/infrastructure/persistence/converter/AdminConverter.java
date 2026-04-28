@@ -3,17 +3,26 @@ package com.ddd.mall.infrastructure.persistence.converter;
 import com.ddd.mall.domain.admin.Admin;
 import com.ddd.mall.domain.shared.CommonStatus;
 import com.ddd.mall.infrastructure.persistence.dataobject.AdminDO;
+import com.ddd.mall.infrastructure.persistence.reflect.DomainObjectReconstructor;
+
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 public class AdminConverter {
 
     public static Admin toDomain(AdminDO d) {
-        Admin admin = new Admin(d.getUsername(), d.getPassword(), d.getRealName());
-        admin.setId(d.getId());
-        admin.setVersion(d.getVersion());
-        admin.setPhone(d.getPhone());
-        admin.setEmail(d.getEmail());
-        admin.setStatus(CommonStatus.valueOf(d.getStatus()));
-        admin.setCreatedAt(d.getCreatedAt());
+        Map<String, Object> fields = new LinkedHashMap<>();
+        fields.put("id", d.getId());
+        fields.put("version", d.getVersion());
+        fields.put("username", d.getUsername());
+        fields.put("password", d.getPassword());
+        fields.put("realName", d.getRealName());
+        fields.put("phone", d.getPhone());
+        fields.put("email", d.getEmail());
+        fields.put("status", CommonStatus.valueOf(d.getStatus()));
+        fields.put("createdAt", d.getCreatedAt());
+
+        Admin admin = DomainObjectReconstructor.reconstruct(Admin.class, fields);
         admin.clearDomainEvents();
         return admin;
     }

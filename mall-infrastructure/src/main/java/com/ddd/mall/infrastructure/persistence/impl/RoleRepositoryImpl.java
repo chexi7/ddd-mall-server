@@ -7,6 +7,7 @@ import com.ddd.mall.infrastructure.persistence.RolePermissionJpaRepository;
 import com.ddd.mall.infrastructure.persistence.converter.RoleConverter;
 import com.ddd.mall.infrastructure.persistence.dataobject.RoleDO;
 import com.ddd.mall.infrastructure.persistence.dataobject.RolePermissionDO;
+import com.ddd.mall.infrastructure.persistence.reflect.DomainObjectReconstructor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
@@ -55,8 +56,7 @@ public class RoleRepositoryImpl implements RoleRepository {
     @Transactional
     public void save(Role role) {
         RoleDO saved = roleJpaRepository.save(RoleConverter.toDO(role));
-        role.setId(saved.getId());
-        role.setVersion(saved.getVersion());
+        DomainObjectReconstructor.setIdAndVersion(role, saved.getId(), saved.getVersion());
 
         // 保存权限关联（全量替换）
         rolePermissionJpaRepository.deleteByRoleId(saved.getId());

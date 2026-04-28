@@ -6,25 +6,31 @@ import com.ddd.mall.domain.product.ProductStatus;
 import com.ddd.mall.domain.shared.Money;
 import com.ddd.mall.infrastructure.persistence.dataobject.ProductDO;
 import com.ddd.mall.infrastructure.persistence.dataobject.ProductSkuDO;
+import com.ddd.mall.infrastructure.persistence.reflect.DomainObjectReconstructor;
 
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 public class ProductConverter {
 
     public static Product toDomain(ProductDO d) {
-        Product p = new Product(d.getName(), d.getDescription(), Money.of(d.getPrice()), d.getCategory());
-        p.setId(d.getId());
-        p.setVersion(d.getVersion());
-        // 覆盖构造函数中设置的默认值
-        p.setStatus(ProductStatus.valueOf(d.getStatus()));
-        p.setCreatedAt(d.getCreatedAt());
-        p.setUpdatedAt(d.getUpdatedAt());
-        // 清掉构造函数中注册的事件（这是重建，不是新建）
-        p.clearDomainEvents();
+        Map<String, Object> fields = new LinkedHashMap<>();
+        fields.put("id", d.getId());
+        fields.put("version", d.getVersion());
+        fields.put("name", d.getName());
+        fields.put("description", d.getDescription());
+        fields.put("price", Money.of(d.getPrice()));
+        fields.put("status", ProductStatus.valueOf(d.getStatus()));
+        fields.put("category", d.getCategory());
+        fields.put("createdAt", d.getCreatedAt());
+        fields.put("updatedAt", d.getUpdatedAt());
+
+        Product p = DomainObjectReconstructor.reconstruct(Product.class, fields);
         for (ProductSkuDO skuDO : d.getSkus()) {
-            ProductSku sku = toSkuDomain(skuDO);
-            p.addSkuInternal(sku);
+            p.addSkuInternal(toSkuDomain(skuDO));
         }
+        p.clearDomainEvents();
         return p;
     }
 
@@ -44,13 +50,12 @@ public class ProductConverter {
     }
 
     private static ProductSku toSkuDomain(ProductSkuDO d) {
-        // 使用包级 setter 重建
-        ProductSku sku = new ProductSku() {};
-        sku.setId(d.getId());
-        sku.setName(d.getName());
-        sku.setPrice(Money.of(d.getPrice()));
-        sku.setAttributes(d.getAttributes());
-        return sku;
+        Map<String, Object> fields = new LinkedHashMap<>();
+        fields.put("id", d.getId());
+        fields.put("name", d.getName());
+        fields.put("price", Money.of(d.getPrice()));
+        fields.put("attributes", d.getAttributes());
+        return DomainObjectReconstructor.reconstruct(ProductSku.class, fields);
     }
 
     private static ProductSkuDO toSkuDO(ProductSku s) {

@@ -6,6 +6,7 @@ import com.ddd.mall.domain.shared.DomainEvent;
 import com.ddd.mall.infrastructure.persistence.ProductJpaRepository;
 import com.ddd.mall.infrastructure.persistence.converter.ProductConverter;
 import com.ddd.mall.infrastructure.persistence.dataobject.ProductDO;
+import com.ddd.mall.infrastructure.persistence.reflect.DomainObjectReconstructor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Repository;
@@ -28,8 +29,7 @@ public class ProductRepositoryImpl implements ProductRepository {
     @Override
     public void save(Product product) {
         ProductDO saved = jpaRepository.save(ProductConverter.toDO(product));
-        product.setId(saved.getId());
-        product.setVersion(saved.getVersion());
+        DomainObjectReconstructor.setIdAndVersion(product, saved.getId(), saved.getVersion());
         List<DomainEvent> events = product.getDomainEvents();
         events.forEach(eventPublisher::publishEvent);
         product.clearDomainEvents();

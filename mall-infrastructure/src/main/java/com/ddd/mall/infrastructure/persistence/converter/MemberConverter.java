@@ -3,20 +3,28 @@ package com.ddd.mall.infrastructure.persistence.converter;
 import com.ddd.mall.domain.member.Address;
 import com.ddd.mall.domain.member.Member;
 import com.ddd.mall.infrastructure.persistence.dataobject.MemberDO;
+import com.ddd.mall.infrastructure.persistence.reflect.DomainObjectReconstructor;
+
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 public class MemberConverter {
 
     public static Member toDomain(MemberDO d) {
-        Member m = new Member(d.getUsername(), d.getPassword(), d.getNickname());
-        m.setId(d.getId());
-        m.setVersion(d.getVersion());
-        m.setPhone(d.getPhone());
-        m.setCreatedAt(d.getCreatedAt());
-        m.clearDomainEvents();
-
+        Map<String, Object> fields = new LinkedHashMap<>();
+        fields.put("id", d.getId());
+        fields.put("version", d.getVersion());
+        fields.put("username", d.getUsername());
+        fields.put("password", d.getPassword());
+        fields.put("nickname", d.getNickname());
+        fields.put("phone", d.getPhone());
+        fields.put("createdAt", d.getCreatedAt());
         if (d.getProvince() != null) {
-            m.setAddress(new Address(d.getProvince(), d.getCity(), d.getDistrict(), d.getAddressDetail(), d.getZipCode()));
+            fields.put("address", new Address(d.getProvince(), d.getCity(), d.getDistrict(), d.getAddressDetail(), d.getZipCode()));
         }
+
+        Member m = DomainObjectReconstructor.reconstruct(Member.class, fields);
+        m.clearDomainEvents();
         return m;
     }
 

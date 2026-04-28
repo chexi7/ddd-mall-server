@@ -5,6 +5,7 @@ import com.ddd.mall.domain.cart.CartRepository;
 import com.ddd.mall.infrastructure.persistence.CartJpaRepository;
 import com.ddd.mall.infrastructure.persistence.converter.CartConverter;
 import com.ddd.mall.infrastructure.persistence.dataobject.CartDO;
+import com.ddd.mall.infrastructure.persistence.reflect.DomainObjectReconstructor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
@@ -24,7 +25,6 @@ public class CartRepositoryImpl implements CartRepository {
     @Override
     public void save(Cart cart) {
         CartDO saved = jpaRepository.save(CartConverter.toDO(cart));
-        cart.setId(saved.getId());
-        cart.setVersion(saved.getVersion());
+        DomainObjectReconstructor.setIdAndVersion(cart, saved.getId(), saved.getVersion());
     }
 }

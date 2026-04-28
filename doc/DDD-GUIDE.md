@@ -19,6 +19,10 @@
 10. [CQRS](#10-cqrs)
 11. [整洁架构与依赖倒置](#11-整洁架构与依赖倒置)
 12. [Lombok 在 DDD 中的正确姿势](#12-lombok-在-ddd-中的正确姿势)
+    - 12.1 推荐用法
+    - 12.2 禁止用法
+    - 12.3 聚合根不暴露 Setter——使用反射重建
+    - 12.4 反射重建机制——为什么不用 Setter
 13. [常见问题 FAQ](#13-常见问题-faq)
 
 ---
@@ -279,6 +283,8 @@ mall/
 │
 ├── mall-infrastructure/                  # 基础设施层
 │   └── infrastructure/persistence/
+│       ├── reflect/                    # 反射重建工具（DomainObjectReconstructor）
+│       │   └── DomainObjectReconstructor.java
 │       ├── dataobject/                   # JPA DO 类（带注解）
 │       │   ├── OrderDO.java
 │       │   └── ProductDO.java
@@ -877,7 +883,7 @@ Order（聚合根）
 
 | 原则 | 说明 | 示例 |
 |------|------|------|
-| **业务方法代替 setter** | 不暴露 `setStatus()`，而是 `pay()`, `cancel()` | `order.pay()` 而非 `order.setStatus(PAID)` |
+| **业务方法代替 setter** | 不暴露任何 setter，而是 `pay()`, `cancel()` 等行为方法；仓储重建使用反射 | `order.pay()` 而非 `order.setStatus(PAID)` |
 | **在构造函数中校验** | 创建时就保证合法 | `if (items.isEmpty()) throw ...` |
 | **聚合间只通过 ID 引用** | Order 不持有 Product 对象，只持有 productId | `orderItem.productId` |
 | **聚合间通过事件通信** | 下单后库存预扣，用 OrderCreatedEvent | 不在 `OrderApplicationService.createOrder` 里直接调 `InventoryRepository` |
@@ -953,8 +959,7 @@ public class OrderRepositoryImpl implements OrderRepository {
     @Override
     public void save(Order order) {
         OrderDO saved = jpaRepository.save(OrderConverter.toDO(order));
-        order.setId(saved.getId());
-        order.setVersion(saved.getVersion());
+        DomainObjectReconstructor.setIdAndVersion(order, saved.getId(), saved.getVersion());
         order.getDomainEvents().forEach(eventPublisher::publishEvent);
         order.clearDomainEvents();
     }
@@ -1107,6 +1112,7 @@ public class ShippingAddress {
 - 有唯一 ID（通常数据库自增）
 - 通过 ID 判断相等性（不是属性值）
 - 可以有状态变更，但应该通过**有业务含义的方法**变更
+- **不应有 public setter**——与聚合根同理，实体的状态变更也应通过行为方法驱动，而非直接 setter
 
 > 参考：[实体与值对象](https://docs.mryqr.com/ddd-entity-and-value-object/)
 
@@ -1431,28 +1437,31 @@ public class OrderRepositoryImpl implements OrderRepository {
 
 | 注解 | 禁止用在哪里 | 原因 |
 |------|-------------|------|
-| `@Setter` | 聚合根 | `order.setStatus(PAID)` 绕过了业务规则，应该用 `order.pay()` |
+| `@Setter` | 聚合根、实体 | `order.setStatus(PAID)` 绕过了业务规则，应该用 `order.pay()`。聚合根不暴露任何 public setter——仓储重建使用反射而非 setter |
+| `@Setter` | 聚合内实体（OrderItem、CartItem 等） | 同理，实体状态变更也应通过行为方法，而非 setter |
 | `@Data` | 聚合根、实体 | 等于 @Getter + @Setter + @ToString + @EqualsAndHashCode，setter 会破坏封装 |
 | `@Builder` | 聚合根 | 构造应通过有业务含义的构造函数或工厂方法 |
 | `@NoArgsConstructor(PUBLIC)` | 聚合根 | 允许创建无效状态的对象 |
 | `protected Xxx() {}`（手写） | 聚合根、实体 | 用 `@ReconstructionOnly @NoArgsConstructor(access = PROTECTED)` 替代，避免手写与意图脱节 |
 
-### 12.3 聚合根的 Setter 策略
+> **特别强调**：mryqr 文章明确指出"禁止 `@Setter` 和 `@Data`。Setter 无法表达业务意图，缺乏有效性检查，可能让对象处于非法状态"。cap4j 框架的代码生成插件在实体生成时会**强制删除 `@Setter` 和 `@Data`**（`GenEntityMojo.fixClassAnnotations()`），确保实体只能通过行为方法变更状态。本项目已从 setter 重建迁移到反射重建，聚合根/实体完全不暴露 setter。
 
-聚合根的 setter 仅用于**仓储重建**（从数据库加载时设置字段）：
+### 12.3 聚合根不暴露 Setter——使用反射重建
+
+聚合根**完全不暴露 public setter**。所有字段变更必须通过有业务含义的行为方法驱动。仓储从数据库重建聚合根时，使用反射而非 setter。
 
 ```java
+// ✅ 正确：聚合根只有 @Getter，没有 @Setter
 @Getter                           // ✅ 所有字段可读
 @ReconstructionOnly               // ✅ 声明 protected 构造函数仅供仓储重建
 @NoArgsConstructor(access = AccessLevel.PROTECTED)  // ✅ Lombok 自动生成 protected 无参构造
 public class Order extends AggregateRoot {
     /** 订单号，系统生成的唯一标识 */
-    @Setter private String orderNo;       // 仅供 Converter 重建用
+    private String orderNo;               // ✅ 没有 @Setter
     /** 下单会员ID，跨聚合引用 */
-    @Setter private Long memberId;        // 仅供 Converter 重建用
+    private Long memberId;                // ✅ 没有 @Setter
     /** 订单状态，驱动业务流转的状态机 */
-    @Setter private OrderStatus status;   // 仅供 Converter 重建用
-    // ...
+    private OrderStatus status;           // ✅ 没有 @Setter
 
     // ✅ 业务方法（有业务含义、有规则校验、有事件发布）
     public void pay() {
@@ -1464,12 +1473,109 @@ public class Order extends AggregateRoot {
 }
 ```
 
+**仓储重建使用反射**——Converter 不调用任何 setter：
+
+```java
+// ✅ OrderConverter.toDomain() — 使用 DomainObjectReconstructor 反射重建
+public static Order toDomain(OrderDO d) {
+    Map<String, Object> fields = new LinkedHashMap<>();
+    fields.put("id", d.getId());
+    fields.put("version", d.getVersion());
+    fields.put("orderNo", d.getOrderNo());
+    fields.put("memberId", d.getMemberId());
+    fields.put("totalAmount", Money.of(d.getTotalAmount()));
+    fields.put("status", OrderStatus.valueOf(d.getStatus()));
+    // ... 其他字段
+
+    Order order = DomainObjectReconstructor.reconstruct(Order.class, fields);
+    // 集合字段通过 *Internal 方法重建
+    for (OrderItemDO itemDO : d.getItems()) {
+        order.addItemInternal(toItemDomain(itemDO));
+    }
+    order.clearDomainEvents();
+    return order;
+}
+```
+
+**RepositoryImpl.save() 同样使用反射回写 id/version**：
+
+```java
+// ✅ 以前：public setter（已废弃）
+// order.setId(saved.getId());       // ❌ setId() 已不存在
+// order.setVersion(saved.getVersion()); // ❌ setVersion() 已不存在
+
+// ✅ 现在：反射
+DomainObjectReconstructor.setIdAndVersion(order, saved.getId(), saved.getVersion());
+```
+
 **团队约定**：
-- 业务代码中禁止调用聚合根的 setter，setter 仅供 infrastructure 层 Converter 使用
+- 聚合根/实体**完全不暴露 public setter**——没有 `@Setter`、没有手写 setter
+- 仓储重建使用 `DomainObjectReconstructor.reconstruct()` 反射设值
+- RepositoryImpl.save() 使用 `DomainObjectReconstructor.setIdAndVersion()` 反射回写 id/version
+- 业务代码中**禁止**直接修改聚合根/实体的字段——必须通过行为方法（如 `order.pay()`、`admin.updateContactInfo()`）
 - 禁止手写 `protected Xxx() {}`，用 `@ReconstructionOnly` + `@NoArgsConstructor(access = PROTECTED)` 替代
 - 聚合根每个字段必须有 `/** */` 注释说明业务含义
 
-> 参考：[Lombok 的正确姿势](https://docs.mryqr.com/how-to-use-lombok-in-ddd/)
+### 12.4 反射重建机制——为什么不用 Setter
+
+#### 为什么聚合根不能有 public setter
+
+DDD 的核心原则是**领域对象是黑盒**。mryqr 文章明确指出："外界将领域对象当做一个黑盒向其发送指令即可"。setter 暴露了内部状态，让外部代码可以直接修改，绕过业务规则：
+
+```java
+// ❌ setter 让任何代码都能绕过业务规则
+order.setStatus(OrderStatus.COMPLETED);  // 从 PENDING_PAYMENT 直接跳到 COMPLETED！
+admin.setPassword("123");                 // 绕过 changePassword() 的最小长度校验！
+inventory.setAvailableStock(999999);      // 绕过 lock()/deduct() 的边界检查！
+```
+
+以前的做法是"团队约定业务代码不调用 setter，setter 仅供 Converter"，但这只是**君子协定**——setter 是 public 的，任何代码都能调用，没有编译期强制约束。cap4j 框架直接在代码生成层面强制删除 `@Setter/@Data`，杜绝了这种可能性。
+
+#### 反射重建的安全性与合理性
+
+反射重建是 DDD 项目的标准做法。JPA 的 `EntityManager.merge()`、MyBatis-Plus 的反射设值、cap4j 的 `_wrap()/unwrap()` 机制，本质上都是框架通过反射填充领域对象字段，而不是要求领域对象提供 public setter。
+
+```java
+// DomainObjectReconstructor — 仅供基础设施层 Converter 使用
+public final class DomainObjectReconstructor {
+    /**
+     * 通过反射重建领域对象
+     * 1. 反射调用 protected 无参构造函数创建实例
+     * 2. 遍历 fieldValues，反射设置字段（包括父类字段 id/version）
+     * 3. 跳过 static/final 字段（如 List<OrderItem> items 保留默认初始化）
+     */
+    public static <T> T reconstruct(Class<T> clazz, Map<String, Object> fieldValues) { ... }
+
+    /**
+     * 反射回写 id 和 version（仅供 RepositoryImpl.save() 使用）
+     */
+    public static void setIdAndVersion(Object domainObject, Long id, Long version) { ... }
+}
+```
+
+#### 重建时不需要校验——为什么
+
+反射重建时，构造函数中的业务校验（如"用户名不能为空"）不会执行。这是**有意为之**：
+
+- 重建的数据来自数据库，这些数据在写入时已经通过了业务方法的校验
+- 重建是"恢复历史状态"，不是"创建新对象"——不需要再校验一次
+- 如果数据库中真的有非法数据（如 username 为空），那是数据腐败问题，应该通过数据修复而非构造函数校验来处理
+
+这与 JPA 的做法一致：`EntityManager.find()` 返回的对象也不会执行构造函数校验。
+
+#### 与 cap4j 的 _wrap/_unwrap 对比
+
+cap4j 使用 `Aggregate.Default._wrap(ENTITY root)` 机制：聚合根类包装一个 JPA 实体对象，框架通过 `_wrap()` 将实体设入聚合根。业务代码操作的是 `Aggregate.Default` 子类（有行为方法），框架通过 `_unwrap()` 取出 JPA 实体来持久化。
+
+本项目选择更简单的方式——直接用反射设值而非引入 Aggregate-Entity 分离层。两者效果相同：**领域对象不暴露 setter，框架通过技术手段完成重建**。
+
+| 方案 | 重建方式 | 领域层纯净度 | 实现复杂度 |
+|------|----------|-------------|-----------|
+| **public @Setter**（旧方案） | Converter 调用 setter | ❌ setter 污染领域层 | 低（但有安全隐患） |
+| **反射重建**（本项目） | DomainObjectReconstructor 反射设值 | ✅ 完全无 setter | 中 |
+| **_wrap/_unwrap**（cap4j） | Aggregate 包装 JPA Entity | ✅ 完全无 setter | 高（需代码生成） |
+
+> 参考：[Lombok 的正确姿势](https://docs.mryqr.com/how-to-use-lombok-in-ddd/) | [cap4j 代码生成插件](https://github.com/netcorepal/cap4j)
 
 ---
 

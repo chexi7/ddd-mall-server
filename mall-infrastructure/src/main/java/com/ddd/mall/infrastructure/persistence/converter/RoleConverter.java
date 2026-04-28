@@ -3,15 +3,24 @@ package com.ddd.mall.infrastructure.persistence.converter;
 import com.ddd.mall.domain.shared.CommonStatus;
 import com.ddd.mall.domain.role.Role;
 import com.ddd.mall.infrastructure.persistence.dataobject.RoleDO;
+import com.ddd.mall.infrastructure.persistence.reflect.DomainObjectReconstructor;
+
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 public class RoleConverter {
 
     public static Role toDomain(RoleDO d) {
-        Role role = new Role(d.getName(), d.getCode(), d.getDescription());
-        role.setId(d.getId());
-        role.setVersion(d.getVersion());
-        role.setStatus(CommonStatus.valueOf(d.getStatus()));
-        role.setCreatedAt(d.getCreatedAt());
+        Map<String, Object> fields = new LinkedHashMap<>();
+        fields.put("id", d.getId());
+        fields.put("version", d.getVersion());
+        fields.put("name", d.getName());
+        fields.put("code", d.getCode());
+        fields.put("description", d.getDescription());
+        fields.put("status", CommonStatus.valueOf(d.getStatus()));
+        fields.put("createdAt", d.getCreatedAt());
+
+        Role role = DomainObjectReconstructor.reconstruct(Role.class, fields);
         role.clearDomainEvents();
         return role;
     }

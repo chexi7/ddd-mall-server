@@ -5,6 +5,7 @@ import com.ddd.mall.domain.inventory.InventoryRepository;
 import com.ddd.mall.infrastructure.persistence.InventoryJpaRepository;
 import com.ddd.mall.infrastructure.persistence.converter.InventoryConverter;
 import com.ddd.mall.infrastructure.persistence.dataobject.InventoryDO;
+import com.ddd.mall.infrastructure.persistence.reflect.DomainObjectReconstructor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Repository;
@@ -26,8 +27,7 @@ public class InventoryRepositoryImpl implements InventoryRepository {
     @Override
     public void save(Inventory inventory) {
         InventoryDO saved = jpaRepository.save(InventoryConverter.toDO(inventory));
-        inventory.setId(saved.getId());
-        inventory.setVersion(saved.getVersion());
+        DomainObjectReconstructor.setIdAndVersion(inventory, saved.getId(), saved.getVersion());
         inventory.getDomainEvents().forEach(eventPublisher::publishEvent);
         inventory.clearDomainEvents();
     }

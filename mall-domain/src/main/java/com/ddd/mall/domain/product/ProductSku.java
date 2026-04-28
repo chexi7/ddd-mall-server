@@ -6,13 +6,11 @@ import com.ddd.mall.domain.shared.ReconstructionOnly;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 /**
  * 商品 SKU（实体，属于 Product 聚合）
  */
 @Getter
-@Setter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @ReconstructionOnly
 public class ProductSku extends Entity {

@@ -6,6 +6,7 @@ import com.ddd.mall.domain.shared.DomainEvent;
 import com.ddd.mall.infrastructure.persistence.OrderJpaRepository;
 import com.ddd.mall.infrastructure.persistence.converter.OrderConverter;
 import com.ddd.mall.infrastructure.persistence.dataobject.OrderDO;
+import com.ddd.mall.infrastructure.persistence.reflect.DomainObjectReconstructor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Repository;
@@ -40,8 +41,7 @@ public class OrderRepositoryImpl implements OrderRepository {
     @Override
     public void save(Order order) {
         OrderDO saved = jpaRepository.save(OrderConverter.toDO(order));
-        order.setId(saved.getId());
-        order.setVersion(saved.getVersion());
+        DomainObjectReconstructor.setIdAndVersion(order, saved.getId(), saved.getVersion());
         List<DomainEvent> events = order.getDomainEvents();
         events.forEach(eventPublisher::publishEvent);
         order.clearDomainEvents();

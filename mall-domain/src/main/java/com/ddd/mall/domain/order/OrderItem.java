@@ -3,13 +3,11 @@ package com.ddd.mall.domain.order;
 import com.ddd.mall.domain.shared.Entity;
 import com.ddd.mall.domain.shared.Money;
 import lombok.Getter;
-import lombok.Setter;
 
 /**
  * 订单项（实体，属于 Order 聚合）
  */
 @Getter
-@Setter
 public class OrderItem extends Entity {
 
     /**

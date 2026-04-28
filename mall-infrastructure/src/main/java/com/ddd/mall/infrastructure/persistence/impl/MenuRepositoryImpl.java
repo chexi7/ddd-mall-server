@@ -4,6 +4,8 @@ import com.ddd.mall.domain.menu.Menu;
 import com.ddd.mall.domain.menu.MenuRepository;
 import com.ddd.mall.infrastructure.persistence.MenuJpaRepository;
 import com.ddd.mall.infrastructure.persistence.converter.MenuConverter;
+import com.ddd.mall.infrastructure.persistence.dataobject.MenuDO;
+import com.ddd.mall.infrastructure.persistence.reflect.DomainObjectReconstructor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
@@ -36,7 +38,8 @@ public class MenuRepositoryImpl implements MenuRepository {
 
     @Override
     public void save(Menu menu) {
-        menu.setId(menuJpaRepository.save(MenuConverter.toDO(menu)).getId());
+        MenuDO saved = menuJpaRepository.save(MenuConverter.toDO(menu));
+        DomainObjectReconstructor.setIdAndVersion(menu, saved.getId(), saved.getVersion());
     }
 
     @Override

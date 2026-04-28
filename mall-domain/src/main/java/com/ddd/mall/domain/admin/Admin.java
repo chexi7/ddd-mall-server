@@ -7,7 +7,6 @@ import com.ddd.mall.domain.shared.ReconstructionOnly;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -25,37 +24,31 @@ public class Admin extends AggregateRoot {
     /**
      * 管理员登录名
      */
-    @Setter
     private String username;
 
     /**
      * 密码
      */
-    @Setter
     private String password;
 
     /**
      * 真实姓名
      */
-    @Setter
     private String realName;
 
     /**
      * 手机号
      */
-    @Setter
     private String phone;
 
     /**
      * 邮箱
      */
-    @Setter
     private String email;
 
     /**
      * 管理员状态
      */
-    @Setter
     private CommonStatus status;
 
     /**
@@ -66,7 +59,6 @@ public class Admin extends AggregateRoot {
     /**
      * 创建时间
      */
-    @Setter
     private LocalDateTime createdAt;
 
     public Admin(String username, String password, String realName) {
@@ -78,6 +70,14 @@ public class Admin extends AggregateRoot {
         this.realName = realName;
         this.status = CommonStatus.ENABLED;
         this.createdAt = LocalDateTime.now();
+    }
+
+    /**
+     * 更新联系方式（手机号、邮箱）
+     */
+    public void updateContactInfo(String phone, String email) {
+        this.phone = phone;
+        this.email = email;
     }
 
     /**

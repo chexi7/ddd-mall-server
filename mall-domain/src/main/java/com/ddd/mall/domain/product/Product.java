@@ -9,7 +9,6 @@ import com.ddd.mall.domain.shared.ReconstructionOnly;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -27,31 +26,26 @@ public class Product extends AggregateRoot {
     /**
      * 商品名称
      */
-    @Setter
     private String name;
 
     /**
      * 商品描述
      */
-    @Setter
     private String description;
 
     /**
      * 商品价格
      */
-    @Setter
     private Money price;
 
     /**
      * 商品状态
      */
-    @Setter
     private ProductStatus status;
 
     /**
-     * 商品分类名称
+     * 商品分类
      */
-    @Setter
     private String category;
 
     /**
@@ -62,13 +56,11 @@ public class Product extends AggregateRoot {
     /**
      * 创建时间
      */
-    @Setter
     private LocalDateTime createdAt;
 
     /**
-     * 最后更新时间
+     * 更新时间
      */
-    @Setter
     private LocalDateTime updatedAt;
 
     public Product(String name, String description, Money price, String category) {
@@ -113,6 +105,8 @@ public class Product extends AggregateRoot {
     public List<ProductSku> getSkus() { return Collections.unmodifiableList(skus); }
     public boolean isOnSale() { return this.status == ProductStatus.ON_SALE; }
 
-    /** 仓储重建用 */
+    /**
+     * 仓储重建用
+     */
     public void addSkuInternal(ProductSku sku) { this.skus.add(sku); }
 }

@@ -7,7 +7,6 @@ import com.ddd.mall.domain.shared.ReconstructionOnly;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -26,7 +25,6 @@ public class Cart extends AggregateRoot {
     /**
      * 会员ID
      */
-    @Setter
     private Long memberId;
 
     /**
@@ -71,7 +69,9 @@ public class Cart extends AggregateRoot {
 
     public List<CartItem> getItems() { return Collections.unmodifiableList(items); }
 
-    /** 仓储重建用 */
+    /**
+     * 仓储重建用
+     */
     public void addItemInternal(CartItem item) { this.items.add(item); }
 
     private Optional<CartItem> findItem(Long productId, Long skuId) {

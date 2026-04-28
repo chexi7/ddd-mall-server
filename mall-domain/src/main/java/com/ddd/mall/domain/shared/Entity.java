@@ -1,16 +1,17 @@
 package com.ddd.mall.domain.shared;
 
 import lombok.Getter;
-import lombok.Setter;
 
 import java.util.Objects;
 
 /**
  * 实体基类
  * 实体通过唯一标识（ID）来区分，而非属性值
+ * <p>
+ * 注意：id 字段不暴露 setter。ID 是实体的身份标识，一旦创建不应被外部修改。
+ * 仓储重建通过反射（DomainObjectReconstructor）设置 id，而非 public setter。
  */
 @Getter
-@Setter
 public abstract class Entity {
 
     /**

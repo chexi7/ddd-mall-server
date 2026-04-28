@@ -7,6 +7,7 @@ import com.ddd.mall.infrastructure.persistence.AdminRoleJpaRepository;
 import com.ddd.mall.infrastructure.persistence.converter.AdminConverter;
 import com.ddd.mall.infrastructure.persistence.dataobject.AdminDO;
 import com.ddd.mall.infrastructure.persistence.dataobject.AdminRoleDO;
+import com.ddd.mall.infrastructure.persistence.reflect.DomainObjectReconstructor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
@@ -50,8 +51,7 @@ public class AdminRepositoryImpl implements AdminRepository {
     @Transactional
     public void save(Admin admin) {
         AdminDO saved = adminJpaRepository.save(AdminConverter.toDO(admin));
-        admin.setId(saved.getId());
-        admin.setVersion(saved.getVersion());
+        DomainObjectReconstructor.setIdAndVersion(admin, saved.getId(), saved.getVersion());
 
         // 保存角色关联（全量替换）
         adminRoleJpaRepository.deleteByAdminId(saved.getId());

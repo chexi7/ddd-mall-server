@@ -8,13 +8,11 @@ import com.ddd.mall.domain.shared.ReconstructionOnly;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 /**
  * 库存聚合根
  */
 @Getter
-@Setter
 @ReconstructionOnly
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Inventory extends AggregateRoot {

@@ -4,35 +4,39 @@ import com.ddd.mall.domain.order.*;
 import com.ddd.mall.domain.shared.Money;
 import com.ddd.mall.infrastructure.persistence.dataobject.OrderDO;
 import com.ddd.mall.infrastructure.persistence.dataobject.OrderItemDO;
+import com.ddd.mall.infrastructure.persistence.reflect.DomainObjectReconstructor;
 
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 public class OrderConverter {
 
     public static Order toDomain(OrderDO d) {
-        Order order = new Order() {};
-        order.setId(d.getId());
-        order.setVersion(d.getVersion());
-        order.setOrderNo(d.getOrderNo());
-        order.setMemberId(d.getMemberId());
-        order.setTotalAmount(Money.of(d.getTotalAmount()));
-        order.setStatus(OrderStatus.valueOf(d.getStatus()));
-        order.setCreatedAt(d.getCreatedAt());
-        order.setPaidAt(d.getPaidAt());
-        order.setShippedAt(d.getShippedAt());
-        order.setCompletedAt(d.getCompletedAt());
-        order.setCancelledAt(d.getCancelledAt());
-
+        Map<String, Object> fields = new LinkedHashMap<>();
+        fields.put("id", d.getId());
+        fields.put("version", d.getVersion());
+        fields.put("orderNo", d.getOrderNo());
+        fields.put("memberId", d.getMemberId());
+        fields.put("totalAmount", Money.of(d.getTotalAmount()));
+        fields.put("status", OrderStatus.valueOf(d.getStatus()));
+        fields.put("createdAt", d.getCreatedAt());
+        fields.put("paidAt", d.getPaidAt());
+        fields.put("shippedAt", d.getShippedAt());
+        fields.put("completedAt", d.getCompletedAt());
+        fields.put("cancelledAt", d.getCancelledAt());
         if (d.getReceiverName() != null) {
-            order.setShippingAddress(new ShippingAddress(
+            fields.put("shippingAddress", new ShippingAddress(
                     d.getReceiverName(), d.getReceiverPhone(),
                     d.getShippingProvince(), d.getShippingCity(),
                     d.getShippingDistrict(), d.getShippingDetail()));
         }
 
+        Order order = DomainObjectReconstructor.reconstruct(Order.class, fields);
         for (OrderItemDO itemDO : d.getItems()) {
             order.addItemInternal(toItemDomain(itemDO));
         }
+        order.clearDomainEvents();
         return order;
     }
 
@@ -65,14 +69,14 @@ public class OrderConverter {
     }
 
     private static OrderItem toItemDomain(OrderItemDO d) {
-        OrderItem item = new OrderItem() {};
-        item.setId(d.getId());
-        item.setProductId(d.getProductId());
-        item.setSkuId(d.getSkuId());
-        item.setProductName(d.getProductName());
-        item.setUnitPrice(Money.of(d.getUnitPrice()));
-        item.setQuantity(d.getQuantity());
-        return item;
+        Map<String, Object> fields = new LinkedHashMap<>();
+        fields.put("id", d.getId());
+        fields.put("productId", d.getProductId());
+        fields.put("skuId", d.getSkuId());
+        fields.put("productName", d.getProductName());
+        fields.put("unitPrice", Money.of(d.getUnitPrice()));
+        fields.put("quantity", d.getQuantity());
+        return DomainObjectReconstructor.reconstruct(OrderItem.class, fields);
     }
 
     private static OrderItemDO toItemDO(OrderItem item) {

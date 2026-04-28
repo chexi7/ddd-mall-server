@@ -1,7 +1,6 @@
 package com.ddd.mall.domain.shared;
 
 import lombok.Getter;
-import lombok.Setter;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -9,14 +8,16 @@ import java.util.List;
 
 /**
  * 聚合根基类
+ * <p>
+ * 注意：version 字段不暴露 setter。version 是乐观锁标识，仅供仓储在 save() 后
+ * 通过反射（DomainObjectReconstructor.setIdAndVersion）回写，业务代码不应直接修改。
  */
 @Getter
 public abstract class AggregateRoot extends Entity {
 
     /**
-     * 版本号
+     * 版本号（乐观锁）
      */
-    @Setter
     private Long version;
 
     /**
