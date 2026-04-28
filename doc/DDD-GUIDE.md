@@ -120,7 +120,8 @@ domain/
 ├── product/     ← 商品上下文
 ├── inventory/   ← 库存上下文
 ├── cart/        ← 购物车上下文
-└── member/      ← 会员上下文
+├── member/      ← 会员上下文
+└── admin/       ← 管理上下文（Admin + Menu + Role + Permission）
 ```
 
 **关键原则：上下文之间不直接引用聚合根对象，只通过 ID 关联 + 领域事件通信。**
@@ -163,52 +164,118 @@ mall/
 │       ├── shared/                       # 共享内核
 │       │   ├── AggregateRoot.java        #   聚合根基类
 │       │   ├── Entity.java               #   实体基类
-│       │   ├── ValueObject.java          #   值对象基类
 │       │   ├── DomainEvent.java          #   领域事件接口
 │       │   ├── DomainException.java      #   领域异常
-│       │   └── Money.java                #   通用值对象
-│       ├── order/                        # 按聚合分包
-│       │   ├── Order.java                #   聚合根
-│       │   ├── OrderItem.java            #   实体
-│       │   ├── OrderStatus.java          #   枚举
-│       │   ├── ShippingAddress.java       #   值对象
-│       │   ├── OrderRepository.java      #   仓储接口
-│       │   └── event/                    #   领域事件
+│       │   ├── Money.java                #   通用值对象（@Getter @EqualsAndHashCode，final 字段）
+│       │   └── CommonStatus.java         #   通用状态枚举（ENABLED / DISABLED）
+│       ├── order/                        # 订单聚合（一个聚合根一个包）
+│       │   ├── Order.java                #   聚合根（包顶层，一眼可见统领者）
+│       │   ├── OrderItem.java            #   内部实体（包顶层，属于 Order 内部）
+│       │   ├── ShippingAddress.java       #   内部值对象（包顶层，属于 Order 内部）
+│       │   ├── OrderStatus.java          #   枚举（只有 1 个，放顶层）
+│       │   ├── OrderRepository.java      #   仓储接口（命令侧，只保留写操作）
+│       │   ├── query/                    #   CQRS 查询端口（读侧接口）
+│       │   │   ├── OrderQueryPort.java   #   查询端口接口（基础设施层实现）
+│       │   │   └── OrderPageResult.java  #   查询返回模型
+│       │   └── event/                    #   领域事件子包
 │       │       ├── OrderCreatedEvent.java
 │       │       ├── OrderPaidEvent.java
 │       │       └── OrderCancelledEvent.java
 │       ├── product/                      # 商品聚合
+│       │   ├── Product.java              #   聚合根
+│       │   ├── ProductSku.java           #   内部实体
+│       │   ├── ProductStatus.java        #   枚举
+│       │   ├── ProductRepository.java    #   仓储接口（命令侧）
+│       │   ├── query/                    #   CQRS 查询端口
+│       │   │   ├── ProductQueryPort.java
+│       │   │   └── ProductPageResult.java
+│       │   └── event/
+│       │       ├── ProductCreatedEvent.java
+│       │       ├── ProductPriceChangedEvent.java
 │       ├── inventory/                    # 库存聚合
-│       ├── cart/                         # 购物车聚合
-│       └── member/                       # 会员聚合
+│       │   ├── Inventory.java            #   聚合根
+│       │   ├── InventoryRepository.java  #   仓储接口
+│       │   └── event/
+│       │       ├── InventoryDeductedEvent.java
+│       │       ├── InventoryRestoredEvent.java
+│       ├── member/                       # 会员聚合
+│       │   ├── Member.java               #   聚合根
+│       │   ├── Address.java              #   内部值对象
+│       │   ├── MemberRepository.java     #   仓储接口（命令侧）
+│       │   └── query/
+│       │       └── MemberQueryPort.java
+│       ├── cart/                         # 贑物车聚合
+│       │   ├── Cart.java                 #   聚合根
+│       │   ├── CartItem.java             #   内部实体（使用 Money 值对象）
+│       │   └── CartRepository.java       #   仓储接口
+│       ├── admin/                        # 管理员聚合（独立包）
+│       │   ├── Admin.java                #   聚合根
+│       │   └── AdminRepository.java      #   仓储接口
+│       ├── role/                         # 角色聚合（独立包——从 admin 拆出）
+│       │   ├── Role.java                 #   聚合根
+│       │   ├── Permission.java           #   值对象（属于 Role 的上下文）
+│       │   ├── PermissionType.java       #   枚举
+│       │   └── RoleRepository.java       #   仓储接口
+│       ├── menu/                         # 菜单聚合（独立包——从 admin 拆出）
+│       │   ├── Menu.java                 #   聚合根
+│       │   ├── MenuType.java             #   枚举
+│       │   └── MenuRepository.java       #   仓储接口
 │
 ├── mall-application/                     # 应用层
 │   └── application/
-│       ├── command/                      # 写操作（按聚合扁平分包，一个聚合一个 ApplicationService）
+│       ├── command/                      # 写操作（按聚合扁平分包）
 │       │   ├── product/
-│       │   │   ├── ProductApplicationService.java   #   聚合服务：createProduct / publishProduct / changePrice
-│       │   │   ├── CreateProductCommand.java        #   Command 类（入参，纯数据载体）
+│       │   │   ├── ProductApplicationService.java   #   createProduct / publishProduct / changePrice
+│       │   │   ├── CreateProductCommand.java        #   命令入参（不可变）
 │       │   │   ├── ChangePriceCommand.java
 │       │   │   └── PublishProductCommand.java
 │       │   ├── order/
-│       │   │   ├── OrderApplicationService.java     #   聚合服务：createOrder / payOrder / cancelOrder
-│       │   │   ├── CreateOrderCommand.java
+│       │   │   ├── OrderApplicationService.java     #   createOrder / payOrder / cancelOrder
+│       │   │   ├── CreateOrderCommand.java          #   命令入参（不可变，含内嵌 OrderItemParam / ShippingAddressParam）
 │       │   │   ├── PayOrderCommand.java
 │       │   │   └── CancelOrderCommand.java
 │       │   └── auth/
-│       │       ├── AuthApplicationService.java      #   认证服务：adminLogin / memberLogin
+│       │       ├── AuthApplicationService.java      #   adminLogin / memberLogin
 │       │       ├── AdminLoginCommand.java
-│       │       ├── AdminLoginResult.java            #   有返回值的用例就近放 *Result
+│       │       ├── AdminLoginResult.java            #   命令出参（有返回值的用例就近放 *Result）
 │       │       ├── MemberLoginCommand.java
 │       │       └── MemberLoginResult.java
-│       ├── query/                        # 读操作（CQRS）—— 同样一个聚合一个 QueryService
-│       │   └── order/
-│       │       ├── OrderQueryService.java           #   orderList / orderDetail
-│       │       └── dto/OrderDetailDto.java
-│       └── eventhandler/                 # 领域事件处理器（保留 *EventHandler 命名）
+│       ├── query/                        # 读操作（CQRS）
+│       │   ├── order/
+│       │   │   ├── OrderQueryService.java           #   orderList / orderDetail
+│       │   │   ├── OrderListQuery.java              #   查询入参（不可变筛选字段 + 继承 PageQuery 分页）
+│       │   │   └── dto/
+│       │   │       ├── OrderDetailDto.java          #   @Getter @Builder（面向展示的读模型）
+│       │   │       ├── OrderListItemDto.java        #   金额字段统一 BigDecimal
+│       │   ├── product/
+│       │   │   ├── ProductQueryService.java         #   productList / productDetail / searchProducts / recommendProducts / hotProducts / categories
+│       │   │   ├── ProductListQuery.java            #   分页 + categoryId + status
+│       │   │   ├── ProductSearchQuery.java          #   分页 + keyword
+│       │   │   └── dto/
+│       │   │       ├── ProductDetailDto.java
+│       │   │       ├── ProductListItemDto.java
+│       │   │       ├── ProductSkuDto.java
+│       │   │       ├── CategoryDto.java
+│       │   ├── admin/
+│       │   │   ├── AdminQueryService.java           #   adminList（3参数暂用裸参数）
+│       │   │   ├── MenuQueryService.java            #   menuTree / menuTreeByPermissionCodes
+│       │   │   ├── RoleQueryService.java            #   roleList
+│       │   │   └── dto/
+│       │   │       ├── AdminListItemDto.java        #   @Getter @Builder
+│       │   │       ├── MenuTreeDto.java
+│       │   │       ├── RoleListItemDto.java
+│       │   ├── dashboard/
+│       │   │   ├── DashboardQueryService.java       #   dashboardStats
+│       │   │   └── dto/
+│       │   │       └── DashboardStatsDto.java
+│       │   └── support/
+│       │       ├── PageQuery.java                   #   分页入参基类（@Getter @Setter 可变）
+│       │       └── PageResult.java                  #   分页出参（@Getter @Builder，字段名 pageNum/pageSize/totalCount/data）
+│       ├── eventhandler/                 # 领域事件处理器（保留 *EventHandler 命名）
 │           └── order/
 │               ├── OrderCreatedEventHandler.java
-│               └── OrderPaidEventHandler.java
+│               ├── OrderPaidEventHandler.java
+│               └── OrderCancelledEventHandler.java
 │
 ├── mall-infrastructure/                  # 基础设施层
 │   └── infrastructure/persistence/
@@ -227,23 +294,34 @@ mall/
 └── mall-web/                             # 接口层
     └── web/
         ├── controller/
-        │   ├── product/ProductController.java
-        │   └── order/OrderController.java
-        ├── request/
-        │   ├── product/CreateProductRequest.java
-        │   └── order/CreateOrderRequest.java
-        └── response/ApiResponse.java
+        │   ├── product/ProductController.java   #   仅注入 ProductApplicationService + ProductQueryService
+        │   ├── product/StorefrontController.java #   仅注入 ProductQueryService
+        │   ├── order/OrderController.java
+        │   ├── admin/AdminController.java
+        │   ├── admin/DashboardController.java    #   仅注入 DashboardQueryService
+        │   └── auth/AuthController.java
+        ├── request/                     # HTTP 请求体 DTO（含 @Valid）
+        └── response/
+            ├── ApiResponse.java          #   统一响应封装
+            └── PageResponse.java         #   已废弃——Controller 直接返回 application 层 PageResult
 ```
 
 ### 4.4 分包原则
 
 | 原则 | 说明 |
 |------|------|
-| **领域层按聚合分包** | `domain/order/`、`domain/product/`，而非 `domain/entity/`、`domain/vo/` |
+| **领域层按聚合分包** | `domain/order/`、`domain/product/`、`domain/role/`，而非 `domain/entity/`、`domain/vo/`；一个聚合根一个包，包内子包按需升级（event/、query/） |
+| **领域层聚合根在包顶层** | 聚合根 + 内部实体/值对象平铺在包顶层；event/ 和 query/ 是子包；一眼看到统领者 |
+| **仓储接口只保留命令侧操作** | `findById/findByXxx/save` → 命令侧；`findPage/countTotal` → 查询侧 QueryPort |
+| **共享概念提取到 shared/** | `CommonStatus`（ENABLED/DISABLED）跨聚合共用，放在 shared/ |
+| **值对象不继承基类** | 用 Lombok `@Getter @AllArgsConstructor @EqualsAndHashCode` + final 字段 + 构造函数校验，无需 `extends ValueObject` |
 | **应用层按聚合扁平分包** | `command/order/`、`query/order/`、`eventhandler/order/`；同聚合的 `*ApplicationService` / `*Command` / `*Result` 平铺在一起，不再嵌套 `cmd/`、`handler/`、`result/` |
 | **接口层按聚合分包** | `controller/order/`、`request/order/` |
 | **基础设施层按技术关注点分包** | `dataobject/`、`converter/`、`impl/` |
 | **所有 ApplicationService 方法必须接受 Command 对象** | 例如 `payOrder(PayOrderCommand command)` 而非 `payOrder(String orderNo)`，保持入参类型安全与可扩展性 |
+| **所有 QueryService 分页方法使用 *Query 对象** | 例如 `orderList(OrderListQuery query)` 而非 `orderList(int, int, String, String)`，4+ 参数必须升级为 *Query |
+| **金额字段统一使用 BigDecimal** | DTO 中金额字段一律用 `BigDecimal`，禁止 `Double`（精度丢失风险） |
+| **DTO 使用 Builder 构建** | `@Getter @Builder @NoArgsConstructor @AllArgsConstructor`，不用 `@Setter` |
 
 应用层命名约定：
 
@@ -281,9 +359,9 @@ mall/
 
 | 层 | 入参 | 出参 |
 |---|---|---|
-| Web Controller | `*Request`（HTTP 请求体 DTO） | `ApiResponse<T>` / `PageResponse<T>` |
+| Web Controller | `*Request`（HTTP 请求体 DTO） | `ApiResponse<T>` / 直接返回 `PageResult<T>` |
 | 应用层命令侧 | `*Command` | `*Result` / 原始类型 / `void` |
-| 应用层查询侧 | 原始参数 / `*Query`（多字段时，详见 4.4.4） | `*Dto`、`PageResult<*Dto>` |
+| 应用层查询侧 | `*Query`（多字段时）/ 裸参数（0~3 个） | `*Dto`、`PageResult<*Dto>` |
 | 领域层 | 聚合根方法的形参 | 聚合根 / 值对象 |
 | 领域事件 | — | `*Event`（过去式名词） |
 
@@ -324,32 +402,53 @@ mall/
 application/query/
 ├── admin/
 │   ├── AdminQueryService.java          ← 服务
-│   ├── AdminListQuery.java             ← 多字段入参（按需新增）
-│   ├── RoleQueryService.java
 │   ├── MenuQueryService.java
+│   ├── RoleQueryService.java
 │   └── dto/
 │       ├── AdminListItemDto.java       ← 出参（读模型）
 │       └── ...
-└── order/
-    ├── OrderQueryService.java
-    ├── OrderListQuery.java             ← 字段变多时新增
-    └── dto/
-        ├── OrderListItemDto.java
-        └── OrderDetailDto.java
+├── order/
+│   ├── OrderQueryService.java
+│   ├── OrderListQuery.java             ← 入参（4 参数 → 升级为 *Query）
+│   └── dto/
+│       ├── OrderListItemDto.java
+│       └── OrderDetailDto.java
+├── product/
+│   ├── ProductQueryService.java
+│   ├── ProductListQuery.java
+│   ├── ProductSearchQuery.java
+│   └── dto/
+│       ├── ProductDetailDto.java
+│       ├── ProductListItemDto.java
+│       └── ...
+├── dashboard/
+│   ├── DashboardQueryService.java
+│   └── dto/
+│       └── DashboardStatsDto.java
+└── support/
+    ├── PageQuery.java                  ← 分页入参基类
+    └── PageResult.java                 ← 分页出参
 ```
 
-`*Query` 类的内容形态可比 `*Command` 宽松一些（查询入参没有"业务事实"语义，可变性约束可以放宽），用 `@Getter @Setter` 通常即可：
+**`*Query` 的不可变性设计**：筛选字段使用 `final`（与 `*Command` 对称），分页字段继承 `PageQuery`（可变，因为分页参数允许外部设置默认值）：
 
 ```java
+// PageQuery —— 分页基类，分页字段允许设置默认值，因此用可变模式
 @Getter
 @Setter
-public class AdminListQuery {
-    private int page = 1;
-    private int size = 10;
-    private String keyword;
-    private Boolean enabled;
-    private LocalDate createdFrom;
-    private LocalDate createdTo;
+@NoArgsConstructor
+@AllArgsConstructor
+public class PageQuery {
+    private int pageNum = 1;
+    private int pageSize = 10;
+}
+
+// OrderListQuery —— 筛选字段不可变，分页字段继承可变基类
+@Getter
+@RequiredArgsConstructor
+public class OrderListQuery extends PageQuery {
+    private final String status;       // 不可变筛选条件
+    private final String keyword;      // 不可变筛选条件
 }
 ```
 
@@ -359,14 +458,317 @@ public class AdminListQuery {
 |---|---|---|
 | 0 ~ 1 个原始类型参数 | 直接传 | `MenuQueryService.menuTree()`、`OrderQueryService.orderDetail(String orderNo)` |
 | 2 ~ 3 个原始类型参数 | 直接传 | `RoleQueryService.roleList(int page, int size)`、`AdminQueryService.adminList(int page, int size, String keyword)` |
-| ≥ 4 个参数 / 内聚业务含义 / 需要 Bean Validation / 字段还会扩展 | 建 `*Query` 类 | `OrderQueryService.orderList(int, int, String, String)` 已 4 个参数，再加任何筛选字段就该升级为 `OrderListQuery` |
+| ≥ 4 个参数 / 内聚业务含义 / 需要 Bean Validation / 字段还会扩展 | 建 `*Query` 类 | `OrderQueryService.orderList(OrderListQuery)`——原 4 个裸参数已升级 |
+| 分页 + 筛选条件组合 | 建 `*Query` 类 extends `PageQuery` | `ProductListQuery(categoryId, status)`、`ProductSearchQuery(keyword)` |
 | 多组互斥搜索条件（搜索 / 报表场景） | 建 `*Query` 类，可配 `@AssertTrue` 等校验 | 如未来 `ProductSearchQuery` |
 
 > 参考：[项目结构](https://docs.mryqr.com/ddd-project-structure/) | [CQRS](https://docs.mryqr.com/ddd-cqrs/)
 
 ---
 
-## 5. 请求处理流程
+### 4.5 为什么这样分包——深层理由
+
+新人打开一个 DDD 项目，最困惑的往往是：**为什么文件夹是这样组织的？** 以下逐层解释每个关键分包决策的理由，帮助你理解这些结构不是"随意排列"，而是映射了真实的业务边界和职责分层。
+
+#### 4.5.1 为什么 `command/` 和 `query/` 分开（CQRS 的物理体现）
+
+命令改变状态，查询只读数据——这是两种**截然不同的职责**。分文件夹不是"多建一个包"的形式主义，而是让新人一眼看到"这个项目读写是分离的"。
+
+**如果不分开**会发生什么？
+
+```java
+// ❌ 混在一起：查询方法里写业务逻辑、命令方法里返回 DTO
+public class OrderService {
+    public OrderDetailDto getOrder(Long id) {  // 读
+        Order order = repo.findById(id);
+        return toDto(order);  // "读"和"写"的逻辑混在同一个类
+    }
+    public void payOrder(PayCommand cmd) {     // 写
+        Order order = repo.findByOrderNo(cmd.getOrderNo());
+        order.pay();
+        repo.save(order);
+    }
+}
+```
+
+问题：
+- 查询方法不需要事务，命令方法需要——混在一起会让 `@Transactional` 的语义混乱
+- 查询可以绕过聚合根（直接查库返回 DTO），命令必须经过聚合根——两者的技术路线根本不同
+- 查询的入参是 `*Query`，命令的入参是 `*Command`——混在一起名字会撞车
+
+**分开后**：
+
+```
+command/order/  ← 只看命令逻辑，事务注解一目了然
+query/order/    ← 只看查询逻辑，readOnly=true 一目了然
+```
+
+> 参考 mryqr 原文："[CQRS 核心思想：命令不返回数据，查询不改变状态](https://docs.mryqr.com/ddd-cqrs/)"
+
+#### 4.5.2 为什么按聚合扁平分包，不按技术角色分包
+
+mryqr 的核心观点："**先业务，后技术**"。这意味着包路径的第一维度是**业务聚合**，而不是技术角色。
+
+对比两种方案：
+
+```
+❌ 按技术角色分包：改一个功能要跨 3 个包
+command/
+├── handler/             ← 所有 Handler
+├── cmd/                 ← 所有 Command
+├── result/              ← 所有 Result
+
+✅ 按聚合扁平分包 + 后缀命名：改订单功能只看一个包
+command/
+├── order/
+│   ├── OrderApplicationService.java  ← 后缀识别角色
+│   ├── CreateOrderCommand.java       ← 后缀识别角色
+│   ├── PayOrderCommand.java
+│   └── CancelOrderCommand.java
+├── product/
+│   ├── ProductApplicationService.java
+│   ├── CreateProductCommand.java
+│   └── ChangePriceCommand.java
+│   └── PublishProductCommand.java
+```
+
+**扁平分包 + 后缀命名 = 既保持业务内聚，又用类名区分角色**。
+
+- 改订单相关功能 → 只看 `command/order/` 这个包
+- 看到后缀 `*Command` → 知道是入参；看到 `*ApplicationService` → 知道是服务
+- 不需要嵌套 `cmd/`、`handler/`、`result/` 三个子包，因为**包路径维度**已经包含了 `command/`，再嵌套就是重复
+
+> 详细论证见 4.4.1 "为什么 `*Command` 后缀不冗余"
+
+#### 4.5.3 为什么 `dto/` 单独成子包，`*Query` 不放进 `dto/`
+
+```
+query/order/
+├── OrderQueryService.java       ← 服务
+├── OrderListQuery.java          ← 入参（同包平铺）
+└── dto/
+    ├── OrderDetailDto.java      ← 出参（集中管理）
+    └── OrderListItemDto.java
+```
+
+**理由**：
+
+- `dto/` 是"读模型出参"的集中营——看 `dto/` 就知道这个聚合对外暴露了什么数据形态。如果有人想了解"订单查询返回什么字段"，他只需要打开 `dto/` 包看一遍
+- `*Query` 是"读模型入参"——和出参是**两个方向**（一进一出），混在一起会模糊目录语义
+- 入参（`*Query`）与服务（`*QueryService`）同包平铺，因为它们是**一起使用的**——构造 Query 对象、调用 Service 方法，这一对操作在 Controller 中总是一起出现
+
+#### 4.5.4 为什么 `eventhandler/` 独立于 `command/` 和 `query/`
+
+mryqr 明确说："事件处理器的地位相当于应用服务"。但触发方式不同：
+
+| 维度 | 命令 | 查询 | 事件处理器 |
+|------|------|------|------------|
+| **触发方式** | Controller 主动调用 | Controller 主动调用 | 领域对象被动触发 |
+| **入参** | `*Command` | `*Query` / 裸参数 | `*Event` |
+| **事务** | `@Transactional` | `@Transactional(readOnly=true)` | `@Transactional` |
+| **是否改变状态** | 是 | 否 | 是 |
+
+命令由外部世界主动发起（"我要支付订单"），事件由领域对象被动触发（"订单已创建"）。分文件夹体现**"入口不同"**这个本质差异——新人一看就知道：command 里的是 Controller 直接调的，eventhandler 里的是 Spring 事件监听器自动调的。
+
+#### 4.5.5 为什么 `support/` 只放 `PageQuery` 和 `PageResult`
+
+分页是**跨聚合的通用机制**，不属于任何特定业务。如果把分页类放在每个聚合包里，会造成大量重复。`PageQuery` / `PageResult` 是"应用层基础设施"，与 domain 层的 `shared/` 对称——都是跨业务聚合的通用支撑。
+
+```
+domain/shared/         ← 领域层通用基类（AggregateRoot, Entity, DomainEvent, Money, CommonStatus）
+application/query/support/ ← 应用层通用分页（PageQuery, PageResult）
+```
+
+#### 4.5.6 为什么领域层"一个聚合根一个包"，而不是"按技术角色分包"
+
+这是 mryqr 最核心的分包原则："**先业务，后技术**"。领域层的包第一维度必须是**业务聚合**，而不是技术角色。
+
+**按聚合分包 vs 按技术角色分包**：
+
+```
+❌ 按技术角色分包：改一个聚合要看 N 个包
+domain/
+├── aggregate/          ← 所有聚合根
+├── entity/             ← 所有实体
+├── valueobject/        ← 所有值对象
+├── repository/         ← 所有仓储接口
+├── event/              ← 所有事件
+├── enum/               ← 所有枚举
+
+✅ 按聚合分包 + 子包：改一个聚合只看一个包
+domain/
+├── order/              ← 订单聚合的所有东西
+│   ├── Order.java          ← 聚合根（顶层，一眼看到统领者）
+│   ├── OrderItem.java      ← 内部实体
+│   ├── ShippingAddress.java ← 内部值对象
+│   ├── OrderRepository.java ← 仓储接口
+│   ├── OrderStatus.java    ← 枚举
+│   ├── query/              ← CQRS 查询端口
+│   └── event/              ← 事件子包
+├── product/
+├── role/
+├── menu/
+```
+
+**为什么聚合根在包顶层、内部对象也平铺在顶层**：
+
+- 聚合根是包的"统领者"——包名即聚合名（`order/` = Order 聚合），聚合根类在顶层一眼可见
+- 内部实体（OrderItem）和值对象（ShippingAddress）也平铺在顶层——因为它们是聚合根的**内部对象**，对外黑盒，但在包内是平级的
+- mryqr: "外部对聚合根的调用只能通过根对象完成"——但包内部的组织不需要隐藏
+
+**为什么 `event/` 和 `query/` 是子包而非平铺**：
+
+- 事件数量可能增多（Order 有 3 个事件），独立子包更清晰
+- QueryPort 是查询侧的独立职责（与仓储接口对称），独立子包一眼区分"写端口 vs 读端口"
+- 如果只有 1~2 个事件或枚举，可以放顶层；多了再升级为子包
+
+#### 4.5.7 为什么 Admin / Role / Menu 拆成三个独立包
+
+**当前问题**：原来 `admin/` 包混合了 3 个聚合根（Admin、Role、Menu）+ 3 个仓储 + 2 个枚举 + 1 个值对象，全部平铺。这违反了"一个聚合根一个包"原则。
+
+**拆分理由**：
+
+1. **独立生命周期**：Admin（管理员）、Role（角色）、Menu（菜单）各有独立的创建、修改、删除生命周期。一个 Role 可以独立于 Admin 存在（被分配给不同 Admin），一个 Menu 可以独立于 Role 存在（只用于导航）
+2. **独立仓储**：三个聚合各自有独立的 Repository——这是它们是独立聚合根的**最直接证据**
+3. **独立统一语言**：Admin 的语言是"管理员/密码/角色分配"，Role 的语言是"角色/权限/权限码"，Menu 的语言是"菜单/权限码/树形结构"。混在一起会让统一语言模糊
+4. **微服务迁移准备**：如果未来需要拆分微服务，Admin/Role/Menu 可能是不同的服务边界——独立包就是天然的拆分点
+
+**`AdminStatus` 的处理**：
+
+原来 `AdminStatus`（ENABLED / DISABLED）被 Admin 和 Role 共用。拆分后，这种通用状态概念提取到 `shared/CommonStatus`——因为"启用/停用"不是某个聚合独有的概念，而是跨聚合的通用语言。
+
+```
+domain/shared/CommonStatus.java    ← 通用状态（ENABLED, DISABLED）
+domain/admin/Admin.java            ← 使用 CommonStatus
+domain/role/Role.java               ← 使用 CommonStatus
+```
+
+#### 4.5.8 为什么仓储接口只保留命令侧操作，查询侧用 QueryPort
+
+mryqr: "资源库以聚合根为单位完成对数据库的访问，参数和返回的数据都应该是聚合根对象"。
+
+这意味着 `findPageForAdmin()`（返回分页列表）、`countTotal()`（返回 long）这些方法不属于仓储——它们的返回值不是聚合根。
+
+**CQRS 的物理体现**：
+
+```
+命令侧（Repository）                    查询侧（QueryPort）
+├── findById → Optional<Order>           ├── findPageForAdmin → OrderPageResult
+├── findByOrderNo → Optional<Order>      ├── countTotal → long
+├── save(Order) → void                   ├── sumTotalAmountSince → BigDecimal
+```
+
+QueryPort 与 Repository 同级——都在领域层定义接口，基础设施层实现。应用层 QueryService 注入两者：
+```java
+private final OrderRepository orderRepository;    // 命令侧：加载单个聚合根
+private final OrderQueryPort orderQueryPort;      // 查询侧：分页/统计/搜索
+```
+
+---
+
+### 4.6 入参出参不可变性规范
+
+不同的入参出参类型有不同的不可变性要求，这是**有意为之的设计**，而非随意选择：
+
+| 类型 | 不可变性 | Lombok 组合 | 原因 |
+|------|----------|-------------|------|
+| `*Command` | **不可变** | `@Getter @RequiredArgsConstructor`（final 字段） | 命令一旦创建不应修改——代表一个确定的业务意图 |
+| `*Query` | **筛选字段不可变，分页字段可变** | `@Getter @RequiredArgsConstructor`(final) + `extends PageQuery` | 筛选条件不应中途变化；分页参数允许前端设置默认值 |
+| `*Result` | **不可变** | `@Getter @RequiredArgsConstructor`（final 字段） | 结果不应被篡改 |
+| `*Dto`（读模型） | **可变（Builder）** | `@Getter @Builder @NoArgsConstructor @AllArgsConstructor` | Builder 便于 QueryService 组装；NoArgsConstructor 便于 Jackson 序列化 |
+| `PageQuery` | **可变** | `@Getter @Setter @NoArgsConstructor @AllArgsConstructor` | 分页字段允许外部设置（Controller 中 `query.setPageNum(page)`） |
+| `PageResult` | **可变（Builder）** | `@Getter @Builder @NoArgsConstructor @AllArgsConstructor` | Builder 便于 QueryService 组装 |
+
+**为什么 `*Dto` 用 Builder 而不是 `@Setter`？**
+
+旧做法用 `@Setter` 导致 DTO 可被任意修改（`dto.setStatus("PAID")`），语义脆弱。改用 Builder 后：
+- 构建 DTO 只能通过 `OrderDetailDto.builder().id(x).orderNo(y)...build()`——构建路径明确、字段不会遗漏
+- 构建完成后 DTO 不会再被修改（虽然技术上可以 setter，但团队约定 DTO 构建后不再修改）
+- `@NoArgsConstructor + @AllArgsConstructor` 确保 Jackson 序列化/反序列化正常
+
+---
+
+### 4.7 层间隔离——常见违规与修复
+
+DDD 项目最常见的架构腐化就是**层间穿透**——某个层直接访问了不该访问的层。以下展示本项目曾出现的典型违规及其修复。
+
+#### ❌ 违规案例：ProductController 直接注入 Infrastructure 层 JPA Repository
+
+```java
+// ❌ Controller 直接访问 Infrastructure 层，跳过 Application 和 Domain
+@RestController
+public class ProductController {
+    private final ProductJpaRepository productJpaRepository;  // ← Infrastructure 层类！
+
+    @GetMapping
+    public ApiResponse<PageResponse<ProductView>> listProducts(...) {
+        List<ProductDO> filtered = productJpaRepository.findAll().stream()  // ← 业务逻辑在 Controller
+                .filter(p -> isVisibleStatus(p, status))
+                .filter(p -> matchesKeyword(p, keyword))
+                .collect(Collectors.toList());
+        return ApiResponse.ok(toPageResponse(filtered, page, size));  // ← 分页逻辑也在 Controller
+    }
+
+    private ProductView toProductView(ProductDO product, ...) {  // ← DTO 转换也在 Controller
+        // ~30 行映射逻辑...
+    }
+}
+```
+
+**三条红线全部踩了**：
+1. Web 层直接引用 Infrastructure 层（`ProductJpaRepository`）——依赖方向从 web → infrastructure，跳过了 application 和 domain
+2. ~150 行业务逻辑（过滤、分页、DTO 转换）写在 Controller 中——Controller 应该极薄
+3. `ProductView` 等 DTO 只在 Web 层定义——查询服务没有对应的读模型
+
+#### ✅ 修复后：所有查询通过 Application 层 QueryService
+
+```java
+// ✅ Controller 极薄：构造 Query → 调用 QueryService → 返回结果
+@RestController
+public class ProductController {
+    private final ProductQueryService productQueryService;  // ← 只依赖 Application 层
+
+    @GetMapping
+    public ApiResponse<PageResult<ProductListItemDto>> listProducts(...) {
+        ProductListQuery query = new ProductListQuery(categoryId, status);
+        query.setPageNum(page);
+        query.setPageSize(size);
+        return ApiResponse.ok(productQueryService.productList(query));  // ← 逻辑全在 QueryService
+    }
+}
+```
+
+**修复要点**：
+- Controller 不再注入任何 Infrastructure 层类
+- 所有查询逻辑（过滤、分页、DTO 转换）移到 `ProductQueryService`
+- `ProductQueryService` 通过**领域 Repository 接口**（`ProductRepository`）访问数据，而非直接用 JPA
+- `ProductListItemDto` 等读模型在 Application 层定义，Web 层直接复用
+
+#### ❌ 违规案例：DashboardStatsService 在 Web 层直接访问 3 个 JPA Repository
+
+```java
+// ❌ Web 层 Service 直接访问 Infrastructure
+@Service
+public class DashboardStatsService {
+    private final ProductJpaRepository productJpaRepository;
+    private final OrderJpaRepository orderJpaRepository;
+    private final MemberJpaRepository memberJpaRepository;
+}
+```
+
+#### ✅ 修复后：DashboardQueryService 在 Application 层通过领域 Repository 接口
+
+```java
+// ✅ Application 层通过领域接口访问数据
+@Service
+public class DashboardQueryService {
+    private final ProductRepository productRepository;    // ← 领域接口
+    private final OrderRepository orderRepository;
+    private final MemberRepository memberRepository;
+}
+```
+
+**原则总结**：Controller / Web 层 Service **不应注入任何 Infrastructure 层的类**。所有数据访问必须经过 Application 层，Application 层通过领域 Repository 接口访问数据。这样保证了依赖方向始终是 **web → application → domain ← infrastructure**。
 
 ### 5.1 创建流程（新建聚合根）
 
@@ -408,7 +810,48 @@ public void payOrder(PayOrderCommand command) {
 ### 5.3 查询流程（CQRS 读侧）
 
 ```
-Controller → QueryService → 直接查数据库 → 返回 DTO
+Controller → 构造 *Query → QueryService → Repository → 返回 *Dto / PageResult<*Dto>
+```
+
+```java
+// Controller：极薄，只做 Request → Query 转换 + 调用 QueryService
+@GetMapping
+public ApiResponse<PageResult<OrderListItemDto>> orderList(
+        @RequestParam(defaultValue = "1") int page,
+        @RequestParam(defaultValue = "10") int size,
+        @RequestParam(required = false) String status,
+        @RequestParam(required = false) String keyword) {
+    OrderListQuery query = new OrderListQuery(status, keyword);
+    query.setPageNum(page);
+    query.setPageSize(size);
+    return ApiResponse.ok(orderQueryService.orderList(query));
+}
+
+// QueryService：查询 + 投影到 DTO（使用 Builder 构建）
+@Transactional(readOnly = true)
+public PageResult<OrderListItemDto> orderList(OrderListQuery query) {
+    int safePage = Math.max(query.getPageNum(), 1);
+    int safeSize = Math.max(query.getPageSize(), 10);
+    OrderPageSlice slice = orderRepository.findPageForAdmin(safePage, safeSize, query.getStatus(), query.getKeyword());
+    List<OrderListItemDto> content = slice.getContent().stream().map(this::toListItemDto).toList();
+    return PageResult.<OrderListItemDto>builder()
+            .data(content)
+            .totalCount(slice.getTotalElements())
+            .totalPages(...)
+            .pageNum(safePage)
+            .pageSize(safeSize)
+            .build();
+}
+
+private OrderListItemDto toListItemDto(Order order) {
+    return OrderListItemDto.builder()
+            .id(order.getId())
+            .orderNo(order.getOrderNo())
+            .status(toApiStatus(order.getStatus()))
+            .totalAmount(order.getTotalAmount().getAmount())  // BigDecimal，不是 doubleValue()
+            .items(...)
+            .build();
+}
 ```
 
 查询不走聚合根，直接查库返回 DTO，避免加载完整聚合的开销。
@@ -440,35 +883,103 @@ Order（聚合根）
 | **聚合间通过事件通信** | 下单后库存预扣，用 OrderCreatedEvent | 不在 `OrderApplicationService.createOrder` 里直接调 `InventoryRepository` |
 | **尽量保持聚合小** | 聚合越大，并发冲突越多 | Order 不包含 Product 的完整信息 |
 
-### 6.3 仓储模式
+### 6.3 仓储模式——命令侧端口
 
-**核心思想：领域层定义接口，基础设施层实现。**
+**核心思想：领域层定义接口，基础设施层实现。仓储接口只保留命令侧操作。**
 
 ```java
-// 领域层：只声明"我需要什么能力"
+// 领域层：只声明"我需要什么能力"——命令侧（加载/保存聚合根）
 public interface OrderRepository {
     Optional<Order> findById(Long id);
     Optional<Order> findByOrderNo(String orderNo);
+    List<Order> findByMemberId(Long memberId);
     void save(Order order);
 }
 
 // 基础设施层：决定"怎么实现"
 public class OrderRepositoryImpl implements OrderRepository {
-    private final OrderJpaRepository jpaRepository;          // Spring Data JPA
-    private final ApplicationEventPublisher eventPublisher;   // 事件发布
+    private final OrderJpaRepository jpaRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Override
     public void save(Order order) {
-        OrderDO saved = jpaRepository.save(OrderConverter.toDO(order));  // 领域对象 → DO → 数据库
+        OrderDO saved = jpaRepository.save(OrderConverter.toDO(order));
         order.setId(saved.getId());
-        // 发布领域事件
+        order.setVersion(saved.getVersion());
         order.getDomainEvents().forEach(eventPublisher::publishEvent);
         order.clearDomainEvents();
     }
 }
 ```
 
-### 6.4 DO 转换（领域层纯净方案）
+**仓储接口瘦身原则**：mryqr观点——"资源库以聚合根为单位完成对数据库的访问"，**参数和返回值都应该是聚合根对象**。
+
+| 方法类型 | 是否属于仓储 | 原因 |
+|----------|-------------|------|
+| `findById` → 聚合根 | ✅ 是 | 命令侧需要加载聚合根才能操作 |
+| `findByOrderNo` → 聚合根 | ✅ 是 | 同上，只是按不同条件加载 |
+| `save` → void | ✅ 是 | 命令侧需要持久化聚合根 |
+| `findPageForAdmin` → 分页列表 | ❌ 不是 | 这是查询侧需求，返回的不是单个聚合根 |
+| `countTotal` → long | ❌ 不是 | 统计查询，与聚合根无关 |
+| `sumTotalAmountSince` → BigDecimal | ❌ 不是 | 统计聚合，与聚合根无关 |
+
+### 6.4 CQRS 查询端口（QueryPort）
+
+CQRS 的核心是**命令和查询走不同路径**。仓储接口（Repository）是命令侧的端口，查询侧需要独立的端口接口——**QueryPort**。
+
+```java
+// 领域层：查询端口接口（读侧）——同样是领域层定义接口，基础设施层实现
+package com.ddd.mall.domain.order.query;
+
+public interface OrderQueryPort {
+    OrderPageResult findPageForAdmin(int page, int size, String statusApi, String keyword);
+    long countTotal();
+    long countByCreatedAtSince(LocalDateTime since);
+    BigDecimal sumTotalAmountSince(LocalDateTime since);
+}
+
+// 基础设施层：实现查询端口（直接用 JPA Specification / JPQL）
+@Repository
+@RequiredArgsConstructor
+public class OrderQueryPortImpl implements OrderQueryPort {
+    private final OrderJpaRepository jpaRepository;
+
+    @Override
+    public OrderPageResult findPageForAdmin(...) {
+        Page<OrderDO> result = jpaRepository.findAll(spec, pageable);
+        return new OrderPageResult(...);
+    }
+}
+```
+
+**为什么 QueryPort 放在领域层而非应用层**：
+- QueryPort 是领域概念的查询抽象（"我需要按状态查订单"），不是应用层的技术编排
+- 与 Repository 同级——两者都是领域层定义的端口接口，由基础设施层实现
+- 应用层的 QueryService 通过 QueryPort 接口访问数据，不直接依赖 JPA Repository
+- 这保持了依赖方向：`application → domain ← infrastructure`
+
+**Repository 与 QueryPort 的对比**：
+
+| 维度 | Repository | QueryPort |
+|------|-----------|-----------|
+| **职责** | 命令侧：加载/保存聚合根 | 查询侧：搜索/统计/分页 |
+| **返回值** | 聚合根对象 | PageResult / 统计值 / List |
+| **调用者** | ApplicationService（写） | QueryService（读） |
+| **包位置** | 聚合包顶层 | 聚合包内 `query/` 子包 |
+| **实现者** | Infrastructure层 | Infrastructure层 |
+
+**应用层 QueryService 同时注入两个端口**：
+
+```java
+@Service
+@RequiredArgsConstructor
+public class OrderQueryService {
+    private final OrderRepository orderRepository;    // 命令侧：加载单个聚合根（如详情查询）
+    private final OrderQueryPort orderQueryPort;      // 查询侧：分页/统计/搜索
+}
+```
+
+### 6.5 DO 转换（领域层纯净方案）
 
 领域对象不带 JPA 注解，基础设施层通过 Converter 做双向转换：
 
@@ -494,23 +1005,53 @@ public class OrderRepositoryImpl implements OrderRepository {
 
 ### 7.2 值对象设计原则
 
+**本项目不使用 `ValueObject` 抽象基类**。值对象的契约通过以下方式保证：
+
 ```java
-// Money —— 所有字段 final，没有 setter，运算返回新实例
+// Money —— 所有字段 final，没有 setter，运算返回新实例，构造函数校验
 @Getter
 @EqualsAndHashCode
 public class Money {
-    private final BigDecimal amount;
-
-    public Money add(Money other) {
-        return new Money(this.amount.add(other.amount));  // 返回新实例
+    private final BigDecimal amount;                 // ← final，不可变
+    private Money(BigDecimal amount) {
+        if (amount == null || amount.compareTo(BigDecimal.ZERO) < 0)
+            throw new DomainException("金额不能为空或负数"); // ← 构造函数校验
+        this.amount = amount.setScale(2, RoundingMode.HALF_UP);
     }
+    public Money add(Money other) { return new Money(this.amount.add(other.amount)); } // ← 返回新实例
 }
 ```
 
-**值对象的好处**：
-- 用 `Money` 替代 `BigDecimal`，让代码有业务含义
-- `ShippingAddress` 替代 6 个松散的字符串字段
-- 自带校验逻辑（构造函数中校验）
+**值对象的 Lombok 规范**：
+
+```java
+// ShippingAddress —— 典型值对象模式
+@Getter
+@AllArgsConstructor               // ← 构造函数赋值（全 final 字段）
+@EqualsAndHashCode                 // ← 属性判等（值对象核心契约）
+public class ShippingAddress {
+    private final String receiverName;
+    private final String province;
+    private final String city;
+    // ...
+}
+```
+
+| 规范项 | 规则 | 原因 |
+|--------|------|------|
+| **所有字段 `final`** | 不可变，无 setter | 值对象一旦创建不应修改 |
+| **`@EqualsAndHashCode`** | 属性判等 | 值对象靠属性值区分，不是靠 ID |
+| **`@Getter @AllArgsConstructor`** | 只读 + 全参构造 | 不暴露 setter，只通过构造函数赋值 |
+| **构造函数校验** | 创建时就保证合法 | "无论何时拿到值对象，都可以相信它是合法的" |
+| **修改返回新实例** | `add/subtract` 返回新对象 | 不修改现有对象，而是创建新实例 |
+| **不继承基类** | 不需要 `extends ValueObject` | Lombok `@EqualsAndHashCode` 已实现值对象契约，强制继承空抽象类无实际收益 |
+
+**为什么不继承 ValueObject 基类**：
+
+本项目原本定义了 `ValueObject` 抽象基类（声明 `equals/hashCode` 为抽象方法），但实际所有值对象（`Money`, `ShippingAddress`, `Address`, `Permission`）都用 Lombok `@EqualsAndHashCode` 实现判等，**从未继承过基类**。删除基类的理由：
+1. Lombok `@EqualsAndHashCode` 已完整实现值对象的 equals/hashCode 契约
+2. 强制继承空抽象类增加约束但无收益——值对象的关键特征是**不可变 + 属性判等 + 自校验**，不是"继承了某个基类"
+3. mryqr文章也未要求值对象必须继承基类——关注行为而非继承层次
 
 ### 7.3 实体设计原则
 
@@ -682,26 +1223,82 @@ public class OrderCreatedEvent implements DomainEvent {
 - 查询需要跨聚合 JOIN、分页排序，聚合根做不了
 - 查询走聚合根会加载大量不需要的关联对象
 
-### 10.3 本项目的简化 CQRS
+### 10.3 本项目的 CQRS 实现
+
+**命令侧**（写操作）：
 
 ```java
-// 查询服务：一个聚合一个 *QueryService，方法名即查询用例
-@Service
-public class OrderQueryService {
-    @Transactional(readOnly = true)
-    public OrderDetailDto orderDetail(String orderNo) {
-        Order order = orderRepository.findByOrderNo(orderNo).orElseThrow(...);
-        return toDto(order);   // 投影到 DTO
-    }
+// 命令入参：不可变，final 字段
+@Getter
+@RequiredArgsConstructor
+public class CreateOrderCommand {
+    private final Long memberId;
+    private final List<OrderItemParam> items;
+    private final ShippingAddressParam shippingAddress;
+}
 
-    @Transactional(readOnly = true)
-    public PageResult<OrderListItemDto> orderList(int page, int size, String status, String keyword) {
-        // ...直接查库，绕过聚合根
+// 应用服务：编排，不包含业务逻辑
+@Service
+@RequiredArgsConstructor
+public class OrderApplicationService {
+    @Transactional
+    public String createOrder(CreateOrderCommand command) {
+        // 从 Command 提取数据，传给领域对象（Command 不进入领域模型内部）
+        List<OrderItem> items = command.getItems().stream()
+                .map(p -> Order.createItem(...))
+                .collect(Collectors.toList());
+        Order order = new Order(orderNo, command.getMemberId(), items, shippingAddress);
+        orderRepository.save(order);
+        return orderNo;  // 轻量返回（单个原始类型）
     }
 }
 ```
 
-对于更复杂的查询场景（列表、分页、跨表 JOIN），可以直接用 JPA/JPQL/原生 SQL 查询，绕过仓储和聚合根。
+**查询侧**（读操作）—— 通过 QueryService + 领域 Repository 接口：
+
+```java
+// 查询入参：不可变筛选字段 + 可变分页基类
+@Getter
+@RequiredArgsConstructor
+public class OrderListQuery extends PageQuery {
+    private final String status;
+    private final String keyword;
+}
+
+// 查询服务：通过领域 Repository 接口访问数据，投影为 DTO
+@Service
+@RequiredArgsConstructor
+public class ProductQueryService {
+    private final ProductRepository productRepository;  // ← 领域接口，不是 JPA
+
+    @Transactional(readOnly = true)
+    public PageResult<ProductListItemDto> productList(ProductListQuery query) {
+        ProductPageSlice slice = productRepository.findPage(...);
+        List<ProductListItemDto> content = slice.getContent().stream()
+                .map(this::toListItemDto).toList();
+        return PageResult.<ProductListItemDto>builder()
+                .data(content)
+                .totalCount(slice.getTotalElements())
+                .build();
+    }
+}
+
+// Controller：极薄，只做 Request → Query 转换
+@GetMapping
+public ApiResponse<PageResult<ProductListItemDto>> listProducts(...) {
+    ProductListQuery query = new ProductListQuery(categoryId, status);
+    query.setPageNum(page);
+    query.setPageSize(size);
+    return ApiResponse.ok(productQueryService.productList(query));
+}
+```
+
+**关键原则**：
+- **Controller 不应注入 Infrastructure 层的任何类**——所有查询必须经过 Application 层 QueryService
+- **QueryService 通过领域 Repository 接口访问数据**——不直接用 JPA Repository
+- **DTO 使用 Builder 构建、金额用 BigDecimal**——不用 @Setter、不用 Double
+
+对于更复杂的查询场景（列表、分页、跨表 JOIN），可以在 Repository 接口中定义专门的查询方法（如 `findPageForAdmin`），实现类中使用 JPA Specification 或 JPQL。
 
 > 参考：[CQRS](https://docs.mryqr.com/ddd-cqrs/)
 
@@ -774,8 +1371,9 @@ public class OrderRepositoryImpl implements OrderRepository {
 |------|----------|------|
 | `@Getter` | 聚合根、实体 | 读取属性是安全的 |
 | `@Getter @EqualsAndHashCode` | 值对象 | 值对象靠属性值判等 |
-| `@Getter @RequiredArgsConstructor` | Command、Event | 不可变数据载体 |
-| `@Getter @Setter` | DTO、DO | 纯数据传输对象 |
+| `@Getter @RequiredArgsConstructor` | Command、Event、Query、Result | 不可变数据载体，final 字段 |
+| `@Getter @Builder @NoArgsConstructor @AllArgsConstructor` | DTO（读模型出参）、PageResult | Builder 便于服务端组装；NoArgsConstructor 便于 Jackson 序列化 |
+| `@Getter @Setter @NoArgsConstructor @AllArgsConstructor` | PageQuery（分页入参基类） | 分页字段允许外部设置默认值（Controller 中 `query.setPageNum(page)`） |
 | `@RequiredArgsConstructor` | ApplicationService、DomainService、EventHandler | 构造器注入 |
 | `@Slf4j` | 事件处理器 | 日志 |
 

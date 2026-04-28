@@ -1,8 +1,8 @@
 package com.ddd.mall.application.command.admin;
 
-import com.ddd.mall.domain.admin.Menu;
-import com.ddd.mall.domain.admin.MenuRepository;
-import com.ddd.mall.domain.admin.MenuType;
+import com.ddd.mall.domain.menu.Menu;
+import com.ddd.mall.domain.menu.MenuRepository;
+import com.ddd.mall.domain.menu.MenuType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

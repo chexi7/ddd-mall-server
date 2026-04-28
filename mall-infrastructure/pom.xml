@@ -20,6 +20,10 @@
             <artifactId>mall-domain</artifactId>
         </dependency>
         <dependency>
+            <groupId>com.ddd</groupId>
+            <artifactId>mall-application</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-jpa</artifactId>
         </dependency>

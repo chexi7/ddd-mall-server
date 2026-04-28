@@ -5,15 +5,17 @@ import com.ddd.mall.application.query.order.dto.OrderListItemDto;
 import com.ddd.mall.application.query.support.PageResult;
 import com.ddd.mall.domain.order.Order;
 import com.ddd.mall.domain.order.OrderItem;
-import com.ddd.mall.domain.order.OrderPageSlice;
 import com.ddd.mall.domain.order.OrderRepository;
 import com.ddd.mall.domain.order.OrderStatus;
 import com.ddd.mall.domain.order.ShippingAddress;
+import com.ddd.mall.domain.order.query.OrderPageResult;
+import com.ddd.mall.domain.order.query.OrderQueryPort;
 import com.ddd.mall.domain.shared.DomainException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
@@ -28,30 +30,34 @@ import java.util.stream.Stream;
 public class OrderQueryService {
 
     private final OrderRepository orderRepository;
+    private final OrderQueryPort orderQueryPort;
 
     /**
      * 管理端订单分页列表。
      *
-     * @param page    页码
-     * @param size    每页条数
-     * @param status  订单状态
-     * @param keyword 搜索关键字
+     * @param query 订单列表查询入参（包含分页 + 筛选条件）
      * @return 分页结果
      */
     @Transactional(readOnly = true)
-    public PageResult<OrderListItemDto> orderList(int page, int size, String status, String keyword) {
-        OrderPageSlice slice = orderRepository.findPageForAdmin(page, size, status, keyword);
+    public PageResult<OrderListItemDto> orderList(OrderListQuery query) {
+        int safePage = Math.max(query.getPageNum(), 1);
+        int safeSize = Math.max(query.getPageSize(), 10);
+        OrderPageResult slice = orderQueryPort.findPageForAdmin(safePage, safeSize, query.getStatus(), query.getKeyword());
         List<OrderListItemDto> content = slice.getContent().stream().map(this::toListItemDto).toList();
-        int safePage = Math.max(page, 1);
-        int safeSize = Math.max(size, 1);
         int totalPages = (int) Math.ceil((double) slice.getTotalElements() / safeSize);
-        return new PageResult<>(content, slice.getTotalElements(), totalPages, safePage, safeSize);
+        return PageResult.<OrderListItemDto>builder()
+                .data(content)
+                .totalCount(slice.getTotalElements())
+                .totalPages(totalPages)
+                .pageNum(safePage)
+                .pageSize(safeSize)
+                .build();
     }
 
     /**
      * 查询订单详情。
      *
-     * @param orderNo 订单号
+     * @param orderNo 订单号（单参数，无需 *Query 对象）
      * @return 订单详情
      */
     @Transactional(readOnly = true)
@@ -62,81 +68,90 @@ public class OrderQueryService {
     }
 
     private OrderListItemDto toListItemDto(Order order) {
-        OrderListItemDto dto = new OrderListItemDto();
-        dto.setId(order.getId());
-        dto.setOrderNo(order.getOrderNo());
-        dto.setStatus(toApiStatus(order.getStatus()));
-        dto.setMemberId(order.getMemberId());
-        dto.setTotalAmount(order.getTotalAmount() == null ? 0d : order.getTotalAmount().getAmount().doubleValue());
-        dto.setCreatedAt(order.getCreatedAt() == null ? null : order.getCreatedAt().toString());
-        dto.setUpdatedAt(resolveUpdatedAt(order));
+        List<OrderListItemDto.OrderItemRowDto> itemRows = order.getItems().stream()
+                .map(item -> OrderListItemDto.OrderItemRowDto.builder()
+                        .id(item.getId())
+                        .productId(item.getProductId())
+                        .productName(item.getProductName())
+                        .skuCode(item.getSkuId() == null ? "" : "SKU-" + item.getSkuId())
+                        .quantity(item.getQuantity())
+                        .unitPrice(item.getUnitPrice() == null ? BigDecimal.ZERO : item.getUnitPrice().getAmount())
+                        .totalPrice(item.subtotal() == null ? BigDecimal.ZERO : item.subtotal().getAmount())
+                        .build())
+                .collect(Collectors.toList());
 
-        for (OrderItem item : order.getItems()) {
-            OrderListItemDto.OrderItemRowDto row = new OrderListItemDto.OrderItemRowDto();
-            row.setId(item.getId());
-            row.setProductId(item.getProductId());
-            row.setProductName(item.getProductName());
-            row.setSkuCode(item.getSkuId() == null ? "" : "SKU-" + item.getSkuId());
-            row.setQuantity(item.getQuantity());
-            row.setUnitPrice(item.getUnitPrice() == null ? 0d : item.getUnitPrice().getAmount().doubleValue());
-            row.setTotalPrice(item.subtotal() == null ? 0d : item.subtotal().getAmount().doubleValue());
-            dto.getItems().add(row);
-        }
-
+        OrderListItemDto.ShippingAddressRowDto addrDto = null;
         ShippingAddress addr = order.getShippingAddress();
         if (addr != null) {
-            OrderListItemDto.ShippingAddressRowDto a = new OrderListItemDto.ShippingAddressRowDto();
-            a.setReceiverName(addr.getReceiverName());
-            a.setReceiverPhone(addr.getReceiverPhone());
-            a.setProvince(addr.getProvince());
-            a.setCity(addr.getCity());
-            a.setDistrict(addr.getDistrict());
-            a.setDetailAddress(addr.getDetail());
-            dto.setShippingAddress(a);
+            addrDto = OrderListItemDto.ShippingAddressRowDto.builder()
+                    .receiverName(addr.getReceiverName())
+                    .receiverPhone(addr.getReceiverPhone())
+                    .province(addr.getProvince())
+                    .city(addr.getCity())
+                    .district(addr.getDistrict())
+                    .detailAddress(addr.getDetail())
+                    .build();
         }
-        return dto;
+
+        return OrderListItemDto.builder()
+                .id(order.getId())
+                .orderNo(order.getOrderNo())
+                .status(toApiStatus(order.getStatus()))
+                .memberId(order.getMemberId())
+                .totalAmount(order.getTotalAmount() == null ? BigDecimal.ZERO : order.getTotalAmount().getAmount())
+                .items(itemRows)
+                .shippingAddress(addrDto)
+                .createdAt(order.getCreatedAt() == null ? null : order.getCreatedAt().toString())
+                .updatedAt(resolveUpdatedAt(order))
+                .build();
     }
 
     private OrderDetailDto toDetailDto(Order order) {
-        OrderDetailDto dto = new OrderDetailDto();
-        dto.setId(order.getId());
-        dto.setOrderNo(order.getOrderNo());
-        dto.setMemberId(order.getMemberId());
-        dto.setStatus(toApiStatus(order.getStatus()));
-        dto.setTotalAmount(order.getTotalAmount().getAmount());
-        dto.setCreatedAt(order.getCreatedAt());
-        dto.setUpdatedAt(Stream.of(order.getCancelledAt(), order.getCompletedAt(), order.getShippedAt(),
+        List<OrderDetailDto.OrderItemDto> itemDtos = order.getItems().stream()
+                .map(item -> OrderDetailDto.OrderItemDto.builder()
+                        .id(item.getId())
+                        .productId(item.getProductId())
+                        .productName(item.getProductName())
+                        .skuCode(item.getSkuId() == null ? "" : "SKU-" + item.getSkuId())
+                        .unitPrice(item.getUnitPrice().getAmount())
+                        .quantity(item.getQuantity())
+                        .subtotal(item.subtotal().getAmount())
+                        .totalPrice(item.subtotal().getAmount())
+                        .build())
+                .collect(Collectors.toList());
+
+        OrderDetailDto.ShippingAddressDto addrDto = null;
+        if (order.getShippingAddress() != null) {
+            ShippingAddress addr = order.getShippingAddress();
+            addrDto = OrderDetailDto.ShippingAddressDto.builder()
+                    .receiverName(addr.getReceiverName())
+                    .receiverPhone(addr.getReceiverPhone())
+                    .fullAddress(addr.fullAddress())
+                    .province(addr.getProvince())
+                    .city(addr.getCity())
+                    .district(addr.getDistrict())
+                    .detailAddress(addr.getDetail())
+                    .build();
+        }
+
+        LocalDateTime updatedAt = Stream.of(order.getCancelledAt(), order.getCompletedAt(), order.getShippedAt(),
                         order.getPaidAt(), order.getCreatedAt())
                 .flatMap(d -> d == null ? Stream.empty() : Stream.of(d))
                 .max(Comparator.naturalOrder())
-                .orElse(order.getCreatedAt()));
-        dto.setPaidAt(order.getPaidAt());
+                .orElse(order.getCreatedAt());
 
-        dto.setItems(order.getItems().stream().map(item -> {
-            OrderDetailDto.OrderItemDto itemDto = new OrderDetailDto.OrderItemDto();
-            itemDto.setId(item.getId());
-            itemDto.setProductId(item.getProductId());
-            itemDto.setProductName(item.getProductName());
-            itemDto.setSkuCode(item.getSkuId() == null ? "" : "SKU-" + item.getSkuId());
-            itemDto.setUnitPrice(item.getUnitPrice().getAmount());
-            itemDto.setQuantity(item.getQuantity());
-            itemDto.setSubtotal(item.subtotal().getAmount());
-            itemDto.setTotalPrice(item.subtotal().getAmount());
-            return itemDto;
-        }).collect(Collectors.toList()));
-
-        if (order.getShippingAddress() != null) {
-            OrderDetailDto.ShippingAddressDto addrDto = new OrderDetailDto.ShippingAddressDto();
-            addrDto.setReceiverName(order.getShippingAddress().getReceiverName());
-            addrDto.setReceiverPhone(order.getShippingAddress().getReceiverPhone());
-            addrDto.setFullAddress(order.getShippingAddress().fullAddress());
-            addrDto.setProvince(order.getShippingAddress().getProvince());
-            addrDto.setCity(order.getShippingAddress().getCity());
-            addrDto.setDistrict(order.getShippingAddress().getDistrict());
-            addrDto.setDetailAddress(order.getShippingAddress().getDetail());
-            dto.setShippingAddress(addrDto);
-        }
-        return dto;
+        return OrderDetailDto.builder()
+                .id(order.getId())
+                .orderNo(order.getOrderNo())
+                .memberId(order.getMemberId())
+                .status(toApiStatus(order.getStatus()))
+                .totalAmount(order.getTotalAmount().getAmount())
+                .items(itemDtos)
+                .shippingAddress(addrDto)
+                .createdAt(order.getCreatedAt())
+                .updatedAt(updatedAt)
+                .paidAt(order.getPaidAt())
+                .build();
     }
 
     private static String resolveUpdatedAt(Order order) {

@@ -1,7 +1,7 @@
 package com.ddd.mall.application.command.admin;
 
-import com.ddd.mall.domain.admin.Role;
-import com.ddd.mall.domain.admin.RoleRepository;
+import com.ddd.mall.domain.role.Role;
+import com.ddd.mall.domain.role.RoleRepository;
 import com.ddd.mall.domain.shared.DomainException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

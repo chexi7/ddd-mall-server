@@ -1,6 +1,7 @@
 package com.ddd.mall.domain.admin;
 
 import com.ddd.mall.domain.shared.AggregateRoot;
+import com.ddd.mall.domain.shared.CommonStatus;
 import com.ddd.mall.domain.shared.DomainException;
 import lombok.Getter;
 import lombok.Setter;
@@ -21,7 +22,7 @@ public class Admin extends AggregateRoot {
     @Setter private String realName;
     @Setter private String phone;
     @Setter private String email;
-    @Setter private AdminStatus status;
+    @Setter private CommonStatus status;
     private final List<Long> roleIds = new ArrayList<>();
     @Setter private LocalDateTime createdAt;
 
@@ -34,7 +35,7 @@ public class Admin extends AggregateRoot {
         this.username = username;
         this.password = password;
         this.realName = realName;
-        this.status = AdminStatus.ENABLED;
+        this.status = CommonStatus.ENABLED;
         this.createdAt = LocalDateTime.now();
     }
 
@@ -52,15 +53,15 @@ public class Admin extends AggregateRoot {
     }
 
     public void enable() {
-        this.status = AdminStatus.ENABLED;
+        this.status = CommonStatus.ENABLED;
     }
 
     public void disable() {
-        this.status = AdminStatus.DISABLED;
+        this.status = CommonStatus.DISABLED;
     }
 
     public boolean isEnabled() {
-        return this.status == AdminStatus.ENABLED;
+        return this.status == CommonStatus.ENABLED;
     }
 
     /**

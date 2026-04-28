@@ -2,8 +2,8 @@ package com.ddd.mall.application.query.admin;
 
 import com.ddd.mall.application.query.admin.dto.RoleListItemDto;
 import com.ddd.mall.application.query.support.PageResult;
-import com.ddd.mall.domain.admin.Role;
-import com.ddd.mall.domain.admin.RoleRepository;
+import com.ddd.mall.domain.role.Role;
+import com.ddd.mall.domain.role.RoleRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -44,22 +44,30 @@ public class RoleQueryService {
             content.add(toDto(role));
         }
         int totalPages = (int) Math.ceil((double) all.size() / safeSize);
-        return new PageResult<>(content, all.size(), totalPages, safePage, safeSize);
+        return PageResult.<RoleListItemDto>builder()
+                .data(content)
+                .totalCount(all.size())
+                .totalPages(totalPages)
+                .pageNum(safePage)
+                .pageSize(safeSize)
+                .build();
     }
 
     private RoleListItemDto toDto(Role role) {
-        RoleListItemDto dto = new RoleListItemDto();
-        dto.setId(role.getId());
-        dto.setName(role.getName());
-        dto.setCode(role.getCode());
-        dto.setCreatedAt(role.getCreatedAt() == null ? null : role.getCreatedAt().toString());
-        for (String code : role.getPermissionCodes()) {
-            RoleListItemDto.RolePermissionBriefDto p = new RoleListItemDto.RolePermissionBriefDto();
-            p.setId(Math.abs(code.hashCode()));
-            p.setName(code);
-            p.setCode(code);
-            dto.getPermissions().add(p);
-        }
-        return dto;
+        List<RoleListItemDto.RolePermissionBriefDto> permDtos = role.getPermissionCodes().stream()
+                .map(code -> RoleListItemDto.RolePermissionBriefDto.builder()
+                        .id((long) Math.abs(code.hashCode()))
+                        .name(code)
+                        .code(code)
+                        .build())
+                .collect(Collectors.toList());
+
+        return RoleListItemDto.builder()
+                .id(role.getId())
+                .name(role.getName())
+                .code(role.getCode())
+                .permissions(permDtos)
+                .createdAt(role.getCreatedAt() == null ? null : role.getCreatedAt().toString())
+                .build();
     }
 }

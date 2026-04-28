@@ -2,10 +2,9 @@ package com.ddd.mall.domain.cart;
 
 import com.ddd.mall.domain.shared.Entity;
 import com.ddd.mall.domain.shared.DomainException;
+import com.ddd.mall.domain.shared.Money;
 import lombok.Getter;
 import lombok.Setter;
-
-import java.math.BigDecimal;
 
 /**
  * 购物车项（实体，属于 Cart 聚合）
@@ -18,11 +17,11 @@ public class CartItem extends Entity {
     private Long skuId;
     private String productName;
     private int quantity;
-    private BigDecimal unitPrice;
+    private Money unitPrice;
 
     protected CartItem() {}
 
-    CartItem(Long productId, Long skuId, String productName, int quantity, BigDecimal unitPrice) {
+    CartItem(Long productId, Long skuId, String productName, int quantity, Money unitPrice) {
         this.productId = productId;
         this.skuId = skuId;
         this.productName = productName;
@@ -37,7 +36,7 @@ public class CartItem extends Entity {
         this.quantity = newQuantity;
     }
 
-    public BigDecimal subtotal() {
-        return unitPrice.multiply(BigDecimal.valueOf(quantity));
+    public Money subtotal() {
+        return unitPrice.multiply(quantity);
     }
 }

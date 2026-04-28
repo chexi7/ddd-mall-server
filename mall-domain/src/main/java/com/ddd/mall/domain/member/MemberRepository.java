@@ -3,7 +3,7 @@ package com.ddd.mall.domain.member;
 import java.util.Optional;
 
 /**
- * 会员仓储接口
+ * 会员仓储接口（命令侧）
  */
 public interface MemberRepository {
 

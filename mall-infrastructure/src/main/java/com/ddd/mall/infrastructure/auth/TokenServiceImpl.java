@@ -1,6 +1,6 @@
 package com.ddd.mall.infrastructure.auth;
 
-import com.ddd.mall.domain.shared.TokenService;
+import com.ddd.mall.application.command.auth.TokenService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 

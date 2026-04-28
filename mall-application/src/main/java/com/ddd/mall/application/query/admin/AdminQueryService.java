@@ -4,8 +4,8 @@ import com.ddd.mall.application.query.admin.dto.AdminListItemDto;
 import com.ddd.mall.application.query.support.PageResult;
 import com.ddd.mall.domain.admin.Admin;
 import com.ddd.mall.domain.admin.AdminRepository;
-import com.ddd.mall.domain.admin.Role;
-import com.ddd.mall.domain.admin.RoleRepository;
+import com.ddd.mall.domain.role.Role;
+import com.ddd.mall.domain.role.RoleRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -58,29 +58,46 @@ public class AdminQueryService {
         }
 
         int totalPages = (int) Math.ceil((double) filtered.size() / safeSize);
-        return new PageResult<>(content, filtered.size(), totalPages, safePage, safeSize);
+        return PageResult.<AdminListItemDto>builder()
+                .data(content)
+                .totalCount(filtered.size())
+                .totalPages(totalPages)
+                .pageNum(safePage)
+                .pageSize(safeSize)
+                .build();
     }
 
     private AdminListItemDto toDto(Admin admin, Map<Long, Role> roleMap) {
-        AdminListItemDto dto = new AdminListItemDto();
-        dto.setId(admin.getId());
-        dto.setUsername(admin.getUsername());
-        dto.setRealName(admin.getRealName());
-        String created = admin.getCreatedAt() == null ? null : admin.getCreatedAt().toString();
-        dto.setCreatedAt(created);
-        dto.setUpdatedAt(created);
-
+        List<AdminListItemDto.AdminRoleBriefDto> roleDtos = new ArrayList<>();
         for (Long roleId : admin.getRoleIds()) {
             Role role = roleMap.get(roleId);
             if (role == null) {
                 continue;
             }
-            AdminListItemDto.AdminRoleBriefDto r = new AdminListItemDto.AdminRoleBriefDto();
-            r.setId(role.getId());
-            r.setName(role.getName());
-            r.setCode(role.getCode());
-            dto.getRoles().add(r);
+            List<AdminListItemDto.RolePermissionBriefDto> permDtos = role.getPermissionCodes().stream()
+                    .map(code -> AdminListItemDto.RolePermissionBriefDto.builder()
+                            .id((long) Math.abs(code.hashCode()))
+                            .name(code)
+                            .code(code)
+                            .build())
+                    .collect(Collectors.toList());
+
+            roleDtos.add(AdminListItemDto.AdminRoleBriefDto.builder()
+                    .id(role.getId())
+                    .name(role.getName())
+                    .code(role.getCode())
+                    .permissions(permDtos)
+                    .build());
         }
-        return dto;
+
+        String created = admin.getCreatedAt() == null ? null : admin.getCreatedAt().toString();
+        return AdminListItemDto.builder()
+                .id(admin.getId())
+                .username(admin.getUsername())
+                .realName(admin.getRealName())
+                .roles(roleDtos)
+                .createdAt(created)
+                .updatedAt(created)
+                .build();
     }
 }

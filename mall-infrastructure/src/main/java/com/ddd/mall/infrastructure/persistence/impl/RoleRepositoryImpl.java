@@ -1,7 +1,7 @@
 package com.ddd.mall.infrastructure.persistence.impl;
 
-import com.ddd.mall.domain.admin.Role;
-import com.ddd.mall.domain.admin.RoleRepository;
+import com.ddd.mall.domain.role.Role;
+import com.ddd.mall.domain.role.RoleRepository;
 import com.ddd.mall.infrastructure.persistence.RoleJpaRepository;
 import com.ddd.mall.infrastructure.persistence.RolePermissionJpaRepository;
 import com.ddd.mall.infrastructure.persistence.converter.RoleConverter;

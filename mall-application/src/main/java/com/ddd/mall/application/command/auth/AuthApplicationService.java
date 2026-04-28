@@ -2,12 +2,12 @@ package com.ddd.mall.application.command.auth;
 
 import com.ddd.mall.domain.admin.Admin;
 import com.ddd.mall.domain.admin.AdminRepository;
-import com.ddd.mall.domain.admin.Role;
-import com.ddd.mall.domain.admin.RoleRepository;
+import com.ddd.mall.domain.role.Role;
+import com.ddd.mall.domain.role.RoleRepository;
 import com.ddd.mall.domain.member.Member;
 import com.ddd.mall.domain.member.MemberRepository;
 import com.ddd.mall.domain.shared.DomainException;
-import com.ddd.mall.domain.shared.TokenService;
+import com.ddd.mall.application.command.auth.TokenService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 

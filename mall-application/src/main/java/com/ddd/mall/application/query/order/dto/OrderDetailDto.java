@@ -1,14 +1,21 @@
 package com.ddd.mall.application.query.order.dto;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
-import lombok.Setter;
+import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
+/**
+ * 订单详情（管理端 / C端共用）
+ */
 @Getter
-@Setter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class OrderDetailDto {
     private Long id;
     private String orderNo;
@@ -22,7 +29,9 @@ public class OrderDetailDto {
     private LocalDateTime paidAt;
 
     @Getter
-    @Setter
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
     public static class OrderItemDto {
         private Long id;
         private Long productId;
@@ -35,7 +44,9 @@ public class OrderDetailDto {
     }
 
     @Getter
-    @Setter
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
     public static class ShippingAddressDto {
         private String receiverName;
         private String receiverPhone;

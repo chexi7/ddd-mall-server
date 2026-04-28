@@ -12,7 +12,6 @@ import com.ddd.mall.infrastructure.auth.UserType;
 import com.ddd.mall.web.request.admin.AssignRolesRequest;
 import com.ddd.mall.web.request.admin.CreateAdminRequest;
 import com.ddd.mall.web.response.ApiResponse;
-import com.ddd.mall.web.response.PageResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -34,20 +33,15 @@ public class AdminController {
      * 分页查询管理员列表
      */
     @GetMapping
-    public ApiResponse<PageResponse<AdminListItemDto>> listAdmins(
+    public ApiResponse<PageResult<AdminListItemDto>> listAdmins(
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(required = false) String keyword) {
-        PageResult<AdminListItemDto> r = adminQueryService.adminList(page, size, keyword);
-        return ApiResponse.ok(new PageResponse<>(
-                r.getContent(), r.getTotalElements(), r.getTotalPages(), r.getPage(), r.getSize()));
+        return ApiResponse.ok(adminQueryService.adminList(page, size, keyword));
     }
 
     /**
      * 创建管理员
-     *
-     * @param request 创建管理员请求参数
-     * @return 创建的管理员ID
      */
     @PostMapping
     @RequirePermission("admin:create")
@@ -60,10 +54,6 @@ public class AdminController {
 
     /**
      * 分配管理员角色
-     *
-     * @param id 管理员ID
-     * @param request 角色分配请求参数
-     * @return 空响应
      */
     @PutMapping("/{id}/roles")
     @RequirePermission("admin:assign-role")

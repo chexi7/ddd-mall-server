@@ -1,7 +1,7 @@
 package com.ddd.mall.infrastructure.persistence.converter;
 
 import com.ddd.mall.domain.admin.Admin;
-import com.ddd.mall.domain.admin.AdminStatus;
+import com.ddd.mall.domain.shared.CommonStatus;
 import com.ddd.mall.infrastructure.persistence.dataobject.AdminDO;
 
 public class AdminConverter {
@@ -12,7 +12,7 @@ public class AdminConverter {
         admin.setVersion(d.getVersion());
         admin.setPhone(d.getPhone());
         admin.setEmail(d.getEmail());
-        admin.setStatus(AdminStatus.valueOf(d.getStatus()));
+        admin.setStatus(CommonStatus.valueOf(d.getStatus()));
         admin.setCreatedAt(d.getCreatedAt());
         admin.clearDomainEvents();
         return admin;

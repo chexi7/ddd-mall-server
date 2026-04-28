@@ -1,8 +1,8 @@
 package com.ddd.mall.application.query.admin;
 
 import com.ddd.mall.application.query.admin.dto.MenuTreeDto;
-import com.ddd.mall.domain.admin.Menu;
-import com.ddd.mall.domain.admin.MenuRepository;
+import com.ddd.mall.domain.menu.Menu;
+import com.ddd.mall.domain.menu.MenuRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -47,20 +47,21 @@ public class MenuQueryService {
     }
 
     private MenuTreeDto toDto(Menu menu) {
-        MenuTreeDto dto = new MenuTreeDto();
-        dto.setId(menu.getId());
-        dto.setName(menu.getName());
-        dto.setParentId(menu.getParentId());
-        dto.setPath(menu.getPath());
-        dto.setComponent(menu.getComponent());
-        dto.setIcon(menu.getIcon());
-        dto.setPermissionCode(menu.getPermissionCode());
-        dto.setType(menu.getType().name());
-        dto.setSort(menu.getSort());
-        dto.setOrderNum(menu.getSort());
-        dto.setVisible(menu.getVisible());
-        dto.setCreatedAt(menu.getCreatedAt() == null ? null : menu.getCreatedAt().toString());
-        return dto;
+        return MenuTreeDto.builder()
+                .id(menu.getId())
+                .name(menu.getName())
+                .parentId(menu.getParentId())
+                .path(menu.getPath())
+                .component(menu.getComponent())
+                .icon(menu.getIcon())
+                .permissionCode(menu.getPermissionCode())
+                .type(menu.getType().name())
+                .sort(menu.getSort())
+                .orderNum(menu.getSort())
+                .visible(menu.getVisible())
+                .createdAt(menu.getCreatedAt() == null ? null : menu.getCreatedAt().toString())
+                .children(new ArrayList<>())
+                .build();
     }
 
     private List<MenuTreeDto> buildTree(List<MenuTreeDto> dtos) {

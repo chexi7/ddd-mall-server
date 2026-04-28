@@ -12,7 +12,6 @@ import com.ddd.mall.infrastructure.auth.UserType;
 import com.ddd.mall.web.request.admin.AssignPermissionsRequest;
 import com.ddd.mall.web.request.admin.CreateRoleRequest;
 import com.ddd.mall.web.response.ApiResponse;
-import com.ddd.mall.web.response.PageResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -34,19 +33,14 @@ public class RoleController {
      * 分页查询角色列表
      */
     @GetMapping
-    public ApiResponse<PageResponse<RoleListItemDto>> listRoles(
+    public ApiResponse<PageResult<RoleListItemDto>> listRoles(
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int size) {
-        PageResult<RoleListItemDto> r = roleQueryService.roleList(page, size);
-        return ApiResponse.ok(new PageResponse<>(
-                r.getContent(), r.getTotalElements(), r.getTotalPages(), r.getPage(), r.getSize()));
+        return ApiResponse.ok(roleQueryService.roleList(page, size));
     }
 
     /**
      * 创建角色
-     *
-     * @param request 创建角色请求参数
-     * @return 创建的角色ID
      */
     @PostMapping
     @RequirePermission("role:create")
@@ -58,10 +52,6 @@ public class RoleController {
 
     /**
      * 分配角色权限
-     *
-     * @param id 角色ID
-     * @param request 权限分配请求参数
-     * @return 空响应
      */
     @PutMapping("/{id}/permissions")
     @RequirePermission("role:assign-permission")

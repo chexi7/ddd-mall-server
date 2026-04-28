@@ -1,27 +1,32 @@
 package com.ddd.mall.application.query.admin.dto;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
-import lombok.Setter;
+import lombok.NoArgsConstructor;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
  * 管理端角色列表项
  */
 @Getter
-@Setter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class RoleListItemDto {
     private Long id;
     private String name;
     private String code;
-    private List<RolePermissionBriefDto> permissions = new ArrayList<>();
+    private List<RolePermissionBriefDto> permissions;
     private String createdAt;
 
     @Getter
-    @Setter
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
     public static class RolePermissionBriefDto {
-        private Integer id;
+        private Long id;
         private String name;
         private String code;
     }

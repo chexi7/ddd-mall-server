@@ -1,7 +1,7 @@
 package com.ddd.mall.infrastructure.persistence.converter;
 
-import com.ddd.mall.domain.admin.Menu;
-import com.ddd.mall.domain.admin.MenuType;
+import com.ddd.mall.domain.menu.Menu;
+import com.ddd.mall.domain.menu.MenuType;
 import com.ddd.mall.infrastructure.persistence.dataobject.MenuDO;
 
 public class MenuConverter {

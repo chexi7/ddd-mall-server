@@ -1,13 +1,19 @@
 package com.ddd.mall.application.query.admin.dto;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
-import lombok.Setter;
+import lombok.NoArgsConstructor;
 
-import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * 管理端菜单树节点
+ */
 @Getter
-@Setter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class MenuTreeDto {
     private Long id;
     private String name;
@@ -24,5 +30,5 @@ public class MenuTreeDto {
     private Integer orderNum;
     private Boolean visible;
     private String createdAt;
-    private List<MenuTreeDto> children = new ArrayList<>();
+    private List<MenuTreeDto> children;
 }

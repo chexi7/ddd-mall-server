@@ -2,6 +2,7 @@ package com.ddd.mall.infrastructure.persistence.converter;
 
 import com.ddd.mall.domain.cart.Cart;
 import com.ddd.mall.domain.cart.CartItem;
+import com.ddd.mall.domain.shared.Money;
 import com.ddd.mall.infrastructure.persistence.dataobject.CartDO;
 import com.ddd.mall.infrastructure.persistence.dataobject.CartItemDO;
 
@@ -37,7 +38,7 @@ public class CartConverter {
         item.setSkuId(d.getSkuId());
         item.setProductName(d.getProductName());
         item.setQuantity(d.getQuantity());
-        item.setUnitPrice(d.getUnitPrice());
+        item.setUnitPrice(Money.of(d.getUnitPrice()));
         return item;
     }
 
@@ -48,7 +49,7 @@ public class CartConverter {
         d.setSkuId(item.getSkuId());
         d.setProductName(item.getProductName());
         d.setQuantity(item.getQuantity());
-        d.setUnitPrice(item.getUnitPrice());
+        d.setUnitPrice(item.getUnitPrice().getAmount());
         return d;
     }
 }

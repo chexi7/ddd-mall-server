@@ -1,7 +1,7 @@
 package com.ddd.mall.infrastructure.persistence.impl;
 
-import com.ddd.mall.domain.admin.Menu;
-import com.ddd.mall.domain.admin.MenuRepository;
+import com.ddd.mall.domain.menu.Menu;
+import com.ddd.mall.domain.menu.MenuRepository;
 import com.ddd.mall.infrastructure.persistence.MenuJpaRepository;
 import com.ddd.mall.infrastructure.persistence.converter.MenuConverter;
 import lombok.RequiredArgsConstructor;

@@ -2,9 +2,11 @@ package com.ddd.mall.domain.cart;
 
 import com.ddd.mall.domain.shared.AggregateRoot;
 import com.ddd.mall.domain.shared.DomainException;
+import com.ddd.mall.domain.shared.Money;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -25,13 +27,16 @@ public class Cart extends AggregateRoot {
         this.memberId = memberId;
     }
 
-    public void addItem(Long productId, Long skuId, String productName, int quantity, java.math.BigDecimal unitPrice) {
+    /**
+     * 添加购物车项（接受 BigDecimal 方便调用方，内部转换为 Money）
+     */
+    public void addItem(Long productId, Long skuId, String productName, int quantity, BigDecimal unitPrice) {
         if (quantity <= 0) throw new DomainException("数量必须大于0");
         Optional<CartItem> existing = findItem(productId, skuId);
         if (existing.isPresent()) {
             existing.get().increaseQuantity(quantity);
         } else {
-            items.add(new CartItem(productId, skuId, productName, quantity, unitPrice));
+            items.add(new CartItem(productId, skuId, productName, quantity, Money.of(unitPrice)));
         }
     }
 

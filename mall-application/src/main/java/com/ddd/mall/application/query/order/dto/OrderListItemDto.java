@@ -1,41 +1,49 @@
 package com.ddd.mall.application.query.order.dto;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
-import lombok.Setter;
+import lombok.NoArgsConstructor;
 
-import java.util.ArrayList;
+import java.math.BigDecimal;
 import java.util.List;
 
 /**
  * 管理端订单列表项（字段形态对齐管理前端）
  */
 @Getter
-@Setter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class OrderListItemDto {
     private Long id;
     private String orderNo;
     private String status;
     private Long memberId;
-    private Double totalAmount;
-    private List<OrderItemRowDto> items = new ArrayList<>();
+    private BigDecimal totalAmount;
+    private List<OrderItemRowDto> items;
     private ShippingAddressRowDto shippingAddress;
     private String createdAt;
     private String updatedAt;
 
     @Getter
-    @Setter
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
     public static class OrderItemRowDto {
         private Long id;
         private Long productId;
         private String productName;
         private String skuCode;
         private Integer quantity;
-        private Double unitPrice;
-        private Double totalPrice;
+        private BigDecimal unitPrice;
+        private BigDecimal totalPrice;
     }
 
     @Getter
-    @Setter
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
     public static class ShippingAddressRowDto {
         private String receiverName;
         private String receiverPhone;
