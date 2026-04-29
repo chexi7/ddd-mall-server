@@ -82,7 +82,9 @@ public class Role extends AggregateRoot {
         return Collections.unmodifiableList(permissionCodes);
     }
 
-    /** 仓储重建用 */
+    /**
+     * 仓储重建用
+     */
     public void addPermissionCodeInternal(String code) {
         this.permissionCodes.add(code);
     }

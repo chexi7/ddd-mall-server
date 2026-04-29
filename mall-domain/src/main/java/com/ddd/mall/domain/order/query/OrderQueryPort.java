@@ -14,12 +14,18 @@ public interface OrderQueryPort {
      */
     OrderPageResult findPageForAdmin(int page, int size, String statusApi, String orderNoKeyword);
 
-    /** 订单总数 */
+    /**
+     * 订单总数
+     */
     long countTotal();
 
-    /** 今日新增订单数 */
+    /**
+     * 今日新增订单数
+     */
     long countByCreatedAtSince(LocalDateTime since);
 
-    /** 今日营收 */
+    /**
+     * 今日营收
+     */
     BigDecimal sumTotalAmountSince(LocalDateTime since);
 }

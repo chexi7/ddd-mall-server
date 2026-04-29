@@ -6,6 +6,8 @@ package com.ddd.mall.domain.member.query;
  */
 public interface MemberQueryPort {
 
-    /** 会员总数 */
+    /**
+     * 会员总数
+     */
     long countTotal();
 }
