@@ -8,25 +8,21 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * 管理员聚合应用服务，承接管理员相关业务用例。
+ * 管理员聚合命令处理器，处理管理员相关命令。
+ * <p>
+ * 对应 DDD 铁律：一个命令处理器只操作一个聚合，聚合仅可以在命令处理器中进行操作。
  */
 @Service
 @RequiredArgsConstructor
-public class AdminApplicationService {
+public class AdminCommandHandler {
 
-    /**
-     * 管理员仓储
-     */
     private final AdminRepository adminRepository;
 
     /**
-     * 创建管理员。
-     *
-     * @param command 创建管理员命令
-     * @return 新建管理员 ID
+     * 处理创建管理员命令。
      */
     @Transactional
-    public Long createAdmin(CreateAdminCommand command) {
+    public Long handle(CreateAdminCommand command) {
         if (adminRepository.existsByUsername(command.getUsername())) {
             throw new DomainException("用户名已存在: " + command.getUsername());
         }
@@ -39,12 +35,10 @@ public class AdminApplicationService {
     }
 
     /**
-     * 给指定管理员分配角色。
-     *
-     * @param command 分配角色命令
+     * 处理分配管理员角色命令。
      */
     @Transactional
-    public void assignRoles(AssignRolesCommand command) {
+    public void handle(AssignRolesCommand command) {
         Admin admin = adminRepository.findById(command.getAdminId())
                 .orElseThrow(() -> new DomainException("管理员不存在: " + command.getAdminId()));
         admin.assignRoles(command.getRoleIds());

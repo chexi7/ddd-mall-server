@@ -1,7 +1,7 @@
 package com.ddd.mall.web.controller.admin;
 
 import com.ddd.mall.application.command.admin.CreateMenuCommand;
-import com.ddd.mall.application.command.admin.MenuApplicationService;
+import com.ddd.mall.application.command.admin.MenuCommandHandler;
 import com.ddd.mall.application.query.admin.MenuQueryService;
 import com.ddd.mall.application.query.admin.dto.MenuTreeDto;
 import com.ddd.mall.infrastructure.auth.RequireLogin;
@@ -25,7 +25,7 @@ import java.util.List;
 @RequireLogin(UserType.ADMIN)
 public class MenuController {
 
-    private final MenuApplicationService menuApplicationService;
+    private final MenuCommandHandler menuCommandHandler;
     private final MenuQueryService menuQueryService;
 
     /**
@@ -42,7 +42,7 @@ public class MenuController {
                 request.getPath(), request.getComponent(),
                 request.getIcon(), request.getPermissionCode(),
                 request.getType(), request.getSort());
-        return ApiResponse.ok(menuApplicationService.createMenu(command));
+        return ApiResponse.ok(menuCommandHandler.handle(command));
     }
 
     /**

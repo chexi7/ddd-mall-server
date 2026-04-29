@@ -8,25 +8,21 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * 角色聚合应用服务，承接角色相关业务用例。
+ * 角色聚合命令处理器，处理角色相关命令。
+ * <p>
+ * 对应 DDD 铁律：一个命令处理器只操作一个聚合，聚合仅可以在命令处理器中进行操作。
  */
 @Service
 @RequiredArgsConstructor
-public class RoleApplicationService {
+public class RoleCommandHandler {
 
-    /**
-     * 角色仓储
-     */
     private final RoleRepository roleRepository;
 
     /**
-     * 创建角色。
-     *
-     * @param command 创建角色命令
-     * @return 新建角色 ID
+     * 处理创建角色命令。
      */
     @Transactional
-    public Long createRole(CreateRoleCommand command) {
+    public Long handle(CreateRoleCommand command) {
         if (roleRepository.existsByCode(command.getCode())) {
             throw new DomainException("角色编码已存在: " + command.getCode());
         }
@@ -36,12 +32,10 @@ public class RoleApplicationService {
     }
 
     /**
-     * 给指定角色分配权限。
-     *
-     * @param command 分配权限命令
+     * 处理分配角色权限命令。
      */
     @Transactional
-    public void assignPermissions(AssignPermissionsCommand command) {
+    public void handle(AssignPermissionsCommand command) {
         Role role = roleRepository.findById(command.getRoleId())
                 .orElseThrow(() -> new DomainException("角色不存在: " + command.getRoleId()));
         role.assignPermissions(command.getPermissionCodes());

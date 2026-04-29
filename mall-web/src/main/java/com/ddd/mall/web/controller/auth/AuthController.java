@@ -2,7 +2,7 @@ package com.ddd.mall.web.controller.auth;
 
 import com.ddd.mall.application.command.auth.AdminLoginCommand;
 import com.ddd.mall.application.command.auth.AdminLoginResult;
-import com.ddd.mall.application.command.auth.AuthApplicationService;
+import com.ddd.mall.application.command.auth.AuthCommandHandler;
 import com.ddd.mall.application.command.auth.MemberLoginCommand;
 import com.ddd.mall.application.command.auth.MemberLoginResult;
 import com.ddd.mall.web.request.auth.LoginRequest;
@@ -23,7 +23,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class AuthController {
 
-    private final AuthApplicationService authApplicationService;
+    private final AuthCommandHandler authCommandHandler;
 
     /**
      * 管理员登录
@@ -34,7 +34,7 @@ public class AuthController {
     @PostMapping("/admin/login")
     public ApiResponse<AdminLoginResult> adminLogin(@Valid @RequestBody LoginRequest request) {
         AdminLoginCommand command = new AdminLoginCommand(request.getUsername(), request.getPassword());
-        return ApiResponse.ok(authApplicationService.adminLogin(command));
+        return ApiResponse.ok(authCommandHandler.handle(command));
     }
 
     /**
@@ -46,6 +46,6 @@ public class AuthController {
     @PostMapping("/member/login")
     public ApiResponse<MemberLoginResult> memberLogin(@Valid @RequestBody LoginRequest request) {
         MemberLoginCommand command = new MemberLoginCommand(request.getUsername(), request.getPassword());
-        return ApiResponse.ok(authApplicationService.memberLogin(command));
+        return ApiResponse.ok(authCommandHandler.handle(command));
     }
 }

@@ -9,25 +9,21 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * 商品聚合应用服务，承接商品相关业务用例。
+ * 商品聚合命令处理器，处理商品相关命令。
+ * <p>
+ * 对应 DDD 铁律：一个命令处理器只操作一个聚合，聚合仅可以在命令处理器中进行操作。
  */
 @Service
 @RequiredArgsConstructor
-public class ProductApplicationService {
+public class ProductCommandHandler {
 
-    /**
-     * 商品仓储
-     */
     private final ProductRepository productRepository;
 
     /**
-     * 创建商品。
-     *
-     * @param command 创建商品命令
-     * @return 新建商品 ID
+     * 处理创建商品命令。
      */
     @Transactional
-    public Long createProduct(CreateProductCommand command) {
+    public Long handle(CreateProductCommand command) {
         Product product = new Product(
                 command.getName(), command.getDescription(),
                 Money.of(command.getPrice()), command.getCategory());
@@ -36,12 +32,10 @@ public class ProductApplicationService {
     }
 
     /**
-     * 上架商品。
-     *
-     * @param command 上架商品命令
+     * 处理上架商品命令。
      */
     @Transactional
-    public void publishProduct(PublishProductCommand command) {
+    public void handle(PublishProductCommand command) {
         Product product = productRepository.findById(command.getProductId())
                 .orElseThrow(() -> new DomainException("商品不存在: " + command.getProductId()));
         product.publish();
@@ -49,12 +43,10 @@ public class ProductApplicationService {
     }
 
     /**
-     * 修改商品价格。
-     *
-     * @param command 修改价格命令
+     * 处理修改商品价格命令。
      */
     @Transactional
-    public void changePrice(ChangePriceCommand command) {
+    public void handle(ChangePriceCommand command) {
         Product product = productRepository.findById(command.getProductId())
                 .orElseThrow(() -> new DomainException("商品不存在: " + command.getProductId()));
         product.changePrice(Money.of(command.getNewPrice()));

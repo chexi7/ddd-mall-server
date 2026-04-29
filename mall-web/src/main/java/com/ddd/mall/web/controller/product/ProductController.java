@@ -2,7 +2,7 @@ package com.ddd.mall.web.controller.product;
 
 import com.ddd.mall.application.command.product.ChangePriceCommand;
 import com.ddd.mall.application.command.product.CreateProductCommand;
-import com.ddd.mall.application.command.product.ProductApplicationService;
+import com.ddd.mall.application.command.product.ProductCommandHandler;
 import com.ddd.mall.application.command.product.PublishProductCommand;
 import com.ddd.mall.application.query.product.ProductListQuery;
 import com.ddd.mall.application.query.product.ProductQueryService;
@@ -26,7 +26,7 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class ProductController {
 
-    private final ProductApplicationService productApplicationService;
+    private final ProductCommandHandler productCommandHandler;
     private final ProductQueryService productQueryService;
 
     /**
@@ -74,7 +74,7 @@ public class ProductController {
         CreateProductCommand command = new CreateProductCommand(
                 request.getName(), request.getDescription(),
                 request.getPrice(), request.getCategory());
-        return ApiResponse.ok(productApplicationService.createProduct(command));
+        return ApiResponse.ok(productCommandHandler.handle(command));
     }
 
     /**
@@ -82,7 +82,7 @@ public class ProductController {
      */
     @PostMapping("/{id}/publish")
     public ApiResponse<Void> publishProduct(@PathVariable Long id) {
-        productApplicationService.publishProduct(new PublishProductCommand(id));
+        productCommandHandler.handle(new PublishProductCommand(id));
         return ApiResponse.ok();
     }
 
@@ -92,7 +92,7 @@ public class ProductController {
     @PutMapping("/{id}/price")
     public ApiResponse<Void> changePrice(@PathVariable Long id,
                                          @Valid @RequestBody ChangePriceRequest request) {
-        productApplicationService.changePrice(new ChangePriceCommand(id, request.getNewPrice()));
+        productCommandHandler.handle(new ChangePriceCommand(id, request.getNewPrice()));
         return ApiResponse.ok();
     }
 }

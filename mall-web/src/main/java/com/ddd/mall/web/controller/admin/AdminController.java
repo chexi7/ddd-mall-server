@@ -1,6 +1,6 @@
 package com.ddd.mall.web.controller.admin;
 
-import com.ddd.mall.application.command.admin.AdminApplicationService;
+import com.ddd.mall.application.command.admin.AdminCommandHandler;
 import com.ddd.mall.application.command.admin.AssignRolesCommand;
 import com.ddd.mall.application.command.admin.CreateAdminCommand;
 import com.ddd.mall.application.query.admin.AdminQueryService;
@@ -26,7 +26,7 @@ import org.springframework.web.bind.annotation.*;
 @RequireLogin(UserType.ADMIN)
 public class AdminController {
 
-    private final AdminApplicationService adminApplicationService;
+    private final AdminCommandHandler adminCommandHandler;
     private final AdminQueryService adminQueryService;
 
     /**
@@ -49,7 +49,7 @@ public class AdminController {
         CreateAdminCommand command = new CreateAdminCommand(
                 request.getUsername(), request.getPassword(), request.getRealName(),
                 request.getPhone(), request.getEmail());
-        return ApiResponse.ok(adminApplicationService.createAdmin(command));
+        return ApiResponse.ok(adminCommandHandler.handle(command));
     }
 
     /**
@@ -59,7 +59,7 @@ public class AdminController {
     @RequirePermission("admin:assign-role")
     public ApiResponse<Void> assignRoles(@PathVariable Long id,
                                          @Valid @RequestBody AssignRolesRequest request) {
-        adminApplicationService.assignRoles(new AssignRolesCommand(id, request.getRoleIds()));
+        adminCommandHandler.handle(new AssignRolesCommand(id, request.getRoleIds()));
         return ApiResponse.ok();
     }
 }

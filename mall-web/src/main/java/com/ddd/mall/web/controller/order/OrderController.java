@@ -2,7 +2,7 @@ package com.ddd.mall.web.controller.order;
 
 import com.ddd.mall.application.command.order.CancelOrderCommand;
 import com.ddd.mall.application.command.order.CreateOrderCommand;
-import com.ddd.mall.application.command.order.OrderApplicationService;
+import com.ddd.mall.application.command.order.OrderCommandHandler;
 import com.ddd.mall.application.command.order.PayOrderCommand;
 import com.ddd.mall.application.query.order.OrderQueryService;
 import com.ddd.mall.application.query.order.dto.OrderDetailDto;
@@ -24,7 +24,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class OrderController {
 
-    private final OrderApplicationService orderApplicationService;
+    private final OrderCommandHandler orderCommandHandler;
     private final OrderQueryService orderQueryService;
 
     /**
@@ -46,7 +46,7 @@ public class OrderController {
                 addr.getReceiverName(), addr.getReceiverPhone(),
                 addr.getProvince(), addr.getCity(), addr.getDistrict(), addr.getDetail());
 
-        return ApiResponse.ok(orderApplicationService.createOrder(
+        return ApiResponse.ok(orderCommandHandler.handle(
                 new CreateOrderCommand(request.getMemberId(), items, shippingAddress)));
     }
 
@@ -58,7 +58,7 @@ public class OrderController {
      */
     @PostMapping("/{orderNo}/pay")
     public ApiResponse<Void> payOrder(@PathVariable String orderNo) {
-        orderApplicationService.payOrder(new PayOrderCommand(orderNo));
+        orderCommandHandler.handle(new PayOrderCommand(orderNo));
         return ApiResponse.ok();
     }
 
@@ -70,7 +70,7 @@ public class OrderController {
      */
     @PostMapping("/{orderNo}/cancel")
     public ApiResponse<Void> cancelOrder(@PathVariable String orderNo) {
-        orderApplicationService.cancelOrder(new CancelOrderCommand(orderNo));
+        orderCommandHandler.handle(new CancelOrderCommand(orderNo));
         return ApiResponse.ok();
     }
 

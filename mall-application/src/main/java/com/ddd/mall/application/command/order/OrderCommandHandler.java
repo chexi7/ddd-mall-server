@@ -17,25 +17,21 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 /**
- * 订单聚合应用服务，承接订单相关业务用例。
+ * 订单聚合命令处理器，处理订单相关命令。
+ * <p>
+ * 对应 DDD 铁律：一个命令处理器只操作一个聚合，聚合仅可以在命令处理器中进行操作。
  */
 @Service
 @RequiredArgsConstructor
-public class OrderApplicationService {
+public class OrderCommandHandler {
 
-    /**
-     * 订单仓储
-     */
     private final OrderRepository orderRepository;
 
     /**
-     * 创建订单。
-     *
-     * @param command 创建订单命令
-     * @return 订单号
+     * 处理创建订单命令。
      */
     @Transactional
-    public String createOrder(CreateOrderCommand command) {
+    public String handle(CreateOrderCommand command) {
         List<OrderItem> items = command.getItems().stream()
                 .map(p -> Order.createItem(
                         p.getProductId(), p.getSkuId(), p.getProductName(),
@@ -54,12 +50,10 @@ public class OrderApplicationService {
     }
 
     /**
-     * 支付订单。
-     *
-     * @param command 支付订单命令
+     * 处理支付订单命令。
      */
     @Transactional
-    public void payOrder(PayOrderCommand command) {
+    public void handle(PayOrderCommand command) {
         Order order = orderRepository.findByOrderNo(command.getOrderNo())
                 .orElseThrow(() -> new DomainException("订单不存在: " + command.getOrderNo()));
         order.pay();
@@ -67,12 +61,10 @@ public class OrderApplicationService {
     }
 
     /**
-     * 取消订单。
-     *
-     * @param command 取消订单命令
+     * 处理取消订单命令。
      */
     @Transactional
-    public void cancelOrder(CancelOrderCommand command) {
+    public void handle(CancelOrderCommand command) {
         Order order = orderRepository.findByOrderNo(command.getOrderNo())
                 .orElseThrow(() -> new DomainException("订单不存在: " + command.getOrderNo()));
         order.cancel();

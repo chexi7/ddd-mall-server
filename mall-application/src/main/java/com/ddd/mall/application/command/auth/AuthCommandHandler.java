@@ -17,39 +17,21 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
- * 认证相关应用服务，承接管理端与会员端的登录用例。
+ * 认证命令处理器，处理管理端与会员端的登录命令。
  */
 @Service
 @RequiredArgsConstructor
-public class AuthApplicationService {
+public class AuthCommandHandler {
 
-    /**
-     * 管理员仓储
-     */
     private final AdminRepository adminRepository;
-
-    /**
-     * 角色仓储
-     */
     private final RoleRepository roleRepository;
-
-    /**
-     * 会员仓储
-     */
     private final MemberRepository memberRepository;
-
-    /**
-     * Token服务
-     */
     private final TokenService tokenService;
 
     /**
-     * 管理员登录。
-     *
-     * @param command 管理员登录命令
-     * @return 管理员登录结果
+     * 处理管理员登录命令。
      */
-    public AdminLoginResult adminLogin(AdminLoginCommand command) {
+    public AdminLoginResult handle(AdminLoginCommand command) {
         Admin admin = adminRepository.findByUsername(command.getUsername())
                 .orElseThrow(() -> new DomainException("用户名或密码错误"));
 
@@ -72,12 +54,9 @@ public class AuthApplicationService {
     }
 
     /**
-     * 会员登录。
-     *
-     * @param command 会员登录命令
-     * @return 会员登录结果
+     * 处理会员登录命令。
      */
-    public MemberLoginResult memberLogin(MemberLoginCommand command) {
+    public MemberLoginResult handle(MemberLoginCommand command) {
         Member member = memberRepository.findByUsername(command.getUsername())
                 .orElseThrow(() -> new DomainException("用户名或密码错误"));
 

@@ -2,7 +2,7 @@ package com.ddd.mall.web.controller.admin;
 
 import com.ddd.mall.application.command.admin.AssignPermissionsCommand;
 import com.ddd.mall.application.command.admin.CreateRoleCommand;
-import com.ddd.mall.application.command.admin.RoleApplicationService;
+import com.ddd.mall.application.command.admin.RoleCommandHandler;
 import com.ddd.mall.application.query.admin.RoleQueryService;
 import com.ddd.mall.application.query.admin.dto.RoleListItemDto;
 import com.ddd.mall.application.query.support.PageResult;
@@ -26,7 +26,7 @@ import org.springframework.web.bind.annotation.*;
 @RequireLogin(UserType.ADMIN)
 public class RoleController {
 
-    private final RoleApplicationService roleApplicationService;
+    private final RoleCommandHandler roleCommandHandler;
     private final RoleQueryService roleQueryService;
 
     /**
@@ -47,7 +47,7 @@ public class RoleController {
     public ApiResponse<Long> createRole(@Valid @RequestBody CreateRoleRequest request) {
         CreateRoleCommand command = new CreateRoleCommand(
                 request.getName(), request.getCode(), request.getDescription());
-        return ApiResponse.ok(roleApplicationService.createRole(command));
+        return ApiResponse.ok(roleCommandHandler.handle(command));
     }
 
     /**
@@ -57,7 +57,7 @@ public class RoleController {
     @RequirePermission("role:assign-permission")
     public ApiResponse<Void> assignPermissions(@PathVariable Long id,
                                                @Valid @RequestBody AssignPermissionsRequest request) {
-        roleApplicationService.assignPermissions(new AssignPermissionsCommand(id, request.getPermissionCodes()));
+        roleCommandHandler.handle(new AssignPermissionsCommand(id, request.getPermissionCodes()));
         return ApiResponse.ok();
     }
 }
